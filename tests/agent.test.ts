@@ -141,3 +141,12 @@ test('a reply that promises an action without calling the tool is not sent; the 
   assert.ok(!said.some(s => s.includes('Please hold')), 'the empty promise was never spoken');
   assert.equal(toolResults(agentRequests[2])[0].transferred, true);
 });
+
+test('asking permission to share a number is not sent; the model is made to give it', async () => {
+  const { chat, agentRequests } = fakeModel([
+    { content: 'Would you like the phone number for Mini City Hall?', toolCalls: [] },
+    { content: 'Mini City Hall is open until 6 PM today, at 425-452-2800.', toolCalls: [] },
+  ]);
+  assert.equal(await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, cityRequests: null, events: null }), 'Mini City Hall is open until 6 PM today, at 425-452-2800.');
+  assert.equal(agentRequests.length, 2);
+});

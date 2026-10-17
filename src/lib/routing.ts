@@ -57,3 +57,25 @@ export function spokenWhen(date: Date, now: Date): string {
   const day = dayOf(date) === dayOf(now) ? "today" : dayOf(date) === dayOf(new Date(now.getTime() + 86_400_000)) ? "tomorrow" : `on ${fmt(date, { weekday: "long" })}`;
   return `${day} at ${fmt(date, { hour: "numeric", minute: "2-digit" }).replace(":00", "")}`;
 }
+
+// Walk-in offices (city pack "inPerson"): which are open right now, and until when or when they next open.
+type Office = { name: string; phone: string; days: number[]; open: number; close: number; closedOnHolidays?: boolean };
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const hourText = (h: number) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
+export function officesNow(now: Date, holidays: ReadonlySet<string> = cityHolidays): string[] {
+  const offices = (city as { inPerson?: Office[] }).inPerson ?? [];
+  const isOpen = (o: Office, at: Date) => {
+    const { weekday, hour } = localTimeParts(at);
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: city.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+    return o.days.includes(WEEKDAYS.indexOf(weekday)) && hour >= o.open && hour < o.close && !(o.closedOnHolidays && holidays.has(day));
+  };
+  return offices.map(o => {
+    if (isOpen(o, now)) return `${o.name} (${o.phone}) is open now, until ${hourText(o.close)}.`;
+    const start = Math.floor(now.getTime() / 3_600_000) * 3_600_000;
+    for (let h = 1; h <= 24 * 8; h++) {
+      const at = new Date(start + h * 3_600_000);
+      if (isOpen(o, at)) return `${o.name} (${o.phone}) is closed now; it opens ${spokenWhen(at, now)}.`;
+    }
+    return `${o.name} (${o.phone}) is closed now.`;
+  });
+}

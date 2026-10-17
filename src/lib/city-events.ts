@@ -2,7 +2,7 @@ import { city } from "./city";
 
 // The city's own events calendar, read live (requirement 2: current events). Bellevue publishes an RSS feed whose
 // items carry the event fields as HTML; which feed is configuration in the city pack. Cached for an hour.
-export type CityEvent = { date: string; time: string; title: string; place: string; details: string; canceled: boolean };
+export type CityEvent = { date: string; time: string; title: string; place: string; details: string; contact?: string; canceled: boolean };
 export interface CityEventSource {
   readonly name: string;
   upcoming(from: Date, days: number): Promise<CityEvent[]>;
@@ -27,7 +27,7 @@ export function parseEventsFeed(xml: string): CityEvent[] {
     const allDay = /^on$/i.test(field(html, "all-day-event"));
     const place = [field(html, "location"), field(html, "address")].map(s => s.replace(/^Location\s*/i, "")).filter(Boolean).join(", ");
     const body = html.match(/field--name-body[\s\S]*?>([\s\S]*?)(?:<\/div>\s*){2}/)?.[1] ?? "";
-    return [{ date, time: allDay ? "All day" : field(html, "event-time"), title: text(item.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? ""), place, details: text(body).replace(/^Description\s*/i, "").slice(0, 240), canceled: /^on$/i.test(field(html, "canceled")) }];
+    return [{ date, time: allDay ? "All day" : field(html, "event-time"), title: text(item.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? ""), place, details: text(body).replace(/^Description\s*/i, "").slice(0, 500), contact: html.match(/mailto:([^"?]+)/)?.[1], canceled: /^on$/i.test(field(html, "canceled")) }];
   }).sort((a, b) => a.date.localeCompare(b.date));
 }
 

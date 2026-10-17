@@ -4,6 +4,7 @@ import { z } from "zod";
 import { think, type Trace } from "@/lib/brain";
 import { fixtureCityRequests, fixtureEvents, testClock, testTickets } from "@/lib/test-mode";
 import { withoutUrls } from "@/lib/reply";
+import { forSpeech } from "@/lib/speech";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
   if (!stream) {
     const parts: string[] = [];
     parts.push(await think_(text => parts.push(text)));
-    const content = withoutUrls(parts.join(" "));
+    const content = forSpeech(withoutUrls(parts.join(" ")));
     return NextResponse.json({ id, object: "chat.completion", created, model, choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: "stop" }], ...(trace && { cityagent: trace }) });
   }
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
   const body$ = new ReadableStream({
     async start(controller) {
       let first = true;
-      const say = (text: string) => { controller.enqueue(chunk(first ? { role: "assistant", content: withoutUrls(text) } : { content: ` ${withoutUrls(text)}` }, null)); first = false; };
+      const say = (text: string) => { controller.enqueue(chunk(first ? { role: "assistant", content: forSpeech(withoutUrls(text)) } : { content: ` ${forSpeech(withoutUrls(text))}` }, null)); first = false; };
       say(await think_(say));
       controller.enqueue(chunk({}, "stop"));
       controller.enqueue(encoder.encode("data: [DONE]\n\n"));

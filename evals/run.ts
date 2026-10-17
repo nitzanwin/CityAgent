@@ -99,8 +99,10 @@ async function score(scenario: Scenario, turns: Turn[]): Promise<Check[]> {
   // Every call: an answer each turn, no server error, no web address read aloud.
   add("answered every turn", turns.length > 0 && replies.every(r => r.trim() && !/something went wrong on my side/i.test(r)));
   add("no URL read aloud", !replies.some(r => /https?:|www\.|\.(gov|com|org)\b/i.test(r)));
-  for (const re of e.says ?? []) add(`says ${re}`, replies.some(r => re.test(r)));
-  for (const re of e.saysNot ?? []) add(`never says ${re}`, !replies.some(r => re.test(r)));
+  // Replies are formatted for speech ("4 2 5, 4 5 2, 4 7 6 2"), so patterns are also tried with digit groups joined.
+  const joined = (r: string) => r.replace(/(?<=\d)[ ,]+(?=\d)/g, "");
+  for (const re of e.says ?? []) add(`says ${re}`, replies.some(r => re.test(r) || re.test(joined(r))));
+  for (const re of e.saysNot ?? []) add(`never says ${re}`, !replies.some(r => re.test(r) || re.test(joined(r))));
   for (const name of e.tools ?? []) add(`calls ${name}`, o.calls.some(c => c.name === name && c.ok));
   const ticket = e.ticket, transfer = e.transfer;
   if (ticket === false) add("no ticket created", !o.tickets.length, o.tickets.length ? JSON.stringify(o.tickets[0]) : undefined);

@@ -5,7 +5,7 @@ import type { CityEventSource } from "./city-events";
 import type { CityRequest, CityRequestSource } from "./city-requests";
 import { yesNo } from "./gates";
 import { chat as defaultChat, models, type Chat, type LlmMessage, type ToolCall, type ToolSpec } from "./llm";
-import { isOfficeOpen, nextOpening, spokenWhen } from "./routing";
+import { isOfficeOpen, nextOpening, officesNow, spokenWhen } from "./routing";
 import { involves, samePhone, STATUS_LABEL, type Ticket, type TicketSystem } from "./tickets";
 
 // The deep model: holds the conversation, decides what to do, calls tools, and phrases the result for speech.
@@ -23,8 +23,11 @@ export class Superseded extends Error {}
 
 const MAX_STEPS = 5;
 const LEAD_IN_ONLY = /^(let me|one moment|just a moment|give me a (second|moment)|i'll (check|look|add|open))[^.?!]{0,40}[.!]?$/i;
-// Promises the caller hears ("let me check", "I'll connect you") and the tools that must back them in the same turn.
+// Promises the caller hears ("let me check", "I'll connect you") and the tools that must back them in the same turn;
+// an empty tool list means the reply is never acceptable (asking permission to share what it should just say).
 const PROMISES: [RegExp, string[]][] = [
+  [/\bwould you like (me to (give|share|read)( you)?|the|their|a)\b[^?]{0,50}\b(number|phone|address|email|hours)\b/i, []],
+  [/\bwould you like me to (check|look|find|search)\b/i, []],
   [/\b(i'?ll (transfer|connect) you|i'?m (transferring|connecting) you|(transferring|connecting) you( now)?|please hold)\b/i, ["transfer_call"]],
   [/\b(let me (check|look|see|find)|i'?m checking)\b/i, ["find_known_issue", "lookup_ticket", "search_city_info", "upcoming_events"]],
   [/\b(i'?ll add you|i'?m adding you)\b/i, ["follow_ticket"]],
@@ -68,11 +71,11 @@ export const TOOLS: ToolSpec[] = [
   fn("follow_ticket", "Add the caller to an existing ticket so they're contacted on updates (instead of opening a duplicate).",
     { reference: text("The existing ticket's reference"), name: text("Caller's name"), phone: text("Callback number") }),
   fn("transfer_call", "Transfer the call to a department's line, only while departments are open. Saying you're transferring does nothing: call this tool.", { department: { type: "string", enum: departmentIds } }),
-  fn("upcoming_events", "The city's events calendar, live: meetings, celebrations, classes, City Hall closures. Use for any question about events or what's happening.", {
+  fn("upcoming_events", "The city's events calendar, live: meetings, celebrations, classes, City Hall closures, each with its description and contact email. Use for any question about events or what's happening, including details of an event already mentioned (pass its name as the query).", {
     days: { type: "integer", description: "How many days ahead to look, 1 to 60 (14 if the caller didn't say)" },
     query: text("Optional word to filter by, e.g. 'council' or 'park'; empty for everything"),
   }),
-  fn("search_city_info", "Search a saved snapshot of the city's website for facts the city knowledge doesn't cover: phone numbers, hours, programs, how to do something, upcoming events. Each result says the date the page was saved.",
+  fn("search_city_info", "Search a saved snapshot of the city's website and city code pages for facts the city knowledge doesn't cover: phone numbers, hours, programs, rules, how to do something. Not for events (use upcoming_events). Each result says the date the page was saved.",
     { query: text("What to look up, in a few words, e.g. 'garbage pickup missed' or 'events this weekend'") }),
 ];
 
@@ -186,6 +189,7 @@ Be genuinely helpful, like a good receptionist:
 - Give the concrete answer: the phone number, address, hours or next step. Never answer with only "check the city's website"; if you mention it, also say who to call and their number.
 - If what the caller wants is unclear, ask one short question to find out before answering (for example, a "residence card" could mean a green card, a state ID, or proof of address).
 - If it isn't a city service, say so and who handles it (see "Not handled by the city" in the city knowledge).
+- Before giving the caller a phone line or office, check it's open now (see "Walk-in offices right now" and each department's hours). If it's closed, say so in the same sentence and offer what's open now instead, such as Mini City Hall on Saturdays, or the event itself if it's happening right now.
 - Only offer information you actually have in the city knowledge or a tool result; don't offer a number or detail and then not have it.
 - If you can't do something yourself, offer the best next step: the right number, an in-person option that's open, or a ticket so the right department calls them back. If the caller asks whether you can help, say what you can do, not what you can't.
 
@@ -204,6 +208,7 @@ For events, meetings or "what's happening", call upcoming_events (it's live) and
 When the caller asks a general question, answer from the city knowledge below if it covers it; otherwise call search_city_info before saying you don't know, and only then point them to the city's website. search_city_info results are a snapshot of the city's website from their asOf date: for events, schedules and anything time-sensitive, say it's as of that date and may have changed.
 
 Right now: ${clock} in ${city.shortName}. ${hours}
+Walk-in offices right now: ${officesNow(now).join(" ")}
 Caller ID: ${callerNumber ? `${callerNumber}. If the caller agrees, use it as their callback number.` : "none (web call); ask for a callback number."}
 
 Departments:
@@ -239,7 +244,7 @@ export async function runAgent(turns: Turn[], ctx: AgentContext): Promise<string
       if (unkept(said, called) && step < MAX_STEPS - 1) {
         if (LEAD_IN_ONLY.test(said)) ctx.say?.(said);
         ctx.log?.("tool", { name: "promise-without-tool", ms: 0, ok: false });
-        messages.push({ role: "assistant", content: said }, { role: "system", content: "You promised an action but called no tool. Call the tool now (find_known_issue to check, transfer_call to transfer, follow_ticket to add, create_ticket to open, lookup_ticket to look up), or if something is missing, ask the caller for it without promising the action." });
+        messages.push({ role: "assistant", content: said }, { role: "system", content: "Rewrite that reply. If you promised an action, call its tool now (find_known_issue to check, transfer_call to transfer, follow_ticket to add, lookup_ticket to look up, upcoming_events or search_city_info to find something). If you asked whether they'd like a number, address or a lookup, don't ask: give it or look it up now. If something is missing, ask the caller for it." });
         continue;
       }
       return said || "Sorry, could you say that again?";

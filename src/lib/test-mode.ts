@@ -24,6 +24,7 @@ export const fixtureCityRequests: CityRequestSource = {
 
 // The city calendar as it was on 2026-10-17, frozen.
 const FIXTURE_EVENTS: CityEvent[] = [
+  { date: "2026-10-17", time: "10:00 AM - 3:30 PM", title: "Residential Permitting Expo", place: "City Hall, 450 110th Avenue NE", details: "Planning on a home remodel or addition? Learn about the permitting process, talk with permit staff and get your questions answered.", contact: "DS_Experience@bellevuewa.gov", canceled: false },
   { date: "2026-10-20", time: "6:00 PM - 10:00 PM", title: "City Council Regular Meeting", place: "Bellevue City Hall, 450 110th Ave NE, Council Chambers", details: "City Council meetings are held the first four Tuesdays of the month.", canceled: false },
   { date: "2026-10-21", time: "6:00 PM - 8:30 PM", title: "Parks & Community Services Board Meeting", place: "Bellevue City Hall, room 1E-113, and online", details: "Regular meeting of the Parks & Community Services Board.", canceled: false },
   { date: "2026-10-24", time: "", title: "Tree Giveaway", place: "Bannerwood Sports Park, 1790 Richards Rd", details: "Sustainable Bellevue's sixth tree giveaway.", canceled: false },

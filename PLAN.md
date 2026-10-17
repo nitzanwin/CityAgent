@@ -300,6 +300,25 @@ A second lesson from simulated calls: tool results are not kept between turns
 (Vapi only replays what was spoken), so a follow-up question about an event got
 made-up hours. The agent now re-runs a tool for any detail it hasn't said aloud.
 
+### Feedback from the "events" call (2026-10-17, Saturday noon)
+
+The caller asked about this weekend's events, then what the Residential
+Permitting Expo was about. The agent searched the saved website snapshot
+instead of the live calendar and said there were no details (the calendar has a
+description and a contact email). It then offered City Hall's Service First
+desk — closed on Saturdays — and when asked "is that line even open?" admitted
+it wasn't, without offering anything open: Mini City Hall (open Saturdays until
+6 PM) or the expo itself, happening at that moment. It also kept asking "would
+you like…?" instead of answering, and the voice read "450 110th" as one number.
+
+Fixes: event follow-ups go to the live calendar, which now carries each event's
+description and contact; the prompt gets a computed "walk-in offices right now"
+line (open until when, or when they next open) and a rule never to give a
+closed line without saying so and offering what's open; asking permission to
+share a number or to look something up is caught in code like an unkept
+promise; phone numbers and addresses are formatted for speech before they're
+spoken. Three scenarios from this call were added to the evaluation.
+
 ### Flow v2 (live)
 
 Each turn reads the whole conversation, not just the last sentence.
@@ -489,7 +508,7 @@ bulk.
 
 ## Evaluation (requirement 6)
 
-**Built.** 41 scripted Bellevue calls, played through the real API — the same
+**Built.** 44 scripted Bellevue calls, played through the real API — the same
 endpoint Vapi calls — and scored automatically. Latest run:
 [`evals/reports/latest.md`](evals/reports/latest.md).
 
@@ -525,8 +544,8 @@ npm run eval -- --only routing                  # one requirement or scenario
 
 | Requirement | Scenarios |
 |---|---|
-| 1 · code & website | Construction and night noise, fireworks, dogs on leash and at beaches, 24-hour street parking, tree permits, a car parked for weeks; missed garbage, City Hall on a Saturday, water bill, shopping-cart timeline, a water main break, green card and driver's license (not city services) |
-| 2 · current events | Next council meeting, what's on next weekend, City Hall on Thanksgiving |
+| 1 · code & website | Construction and night noise, fireworks, dogs on leash and at beaches, 24-hour street parking, tree permits, a car parked for weeks; missed garbage, City Hall on a Saturday, who to talk to on a Saturday, water bill, shopping-cart timeline, a water main break, green card and driver's license (not city services) |
+| 2 · current events | Next council meeting, what's on next weekend, details of an event happening today, City Hall on Thanksgiving, and the 2026-10-17 call replayed (never point to a closed line) |
 | 3 · tickets | New problem while closed (ticket with reference and follow-up), asks for what's missing, known issue → join instead of duplicating, already in the city's 311 system, status by reference / caller ID / a number given on a web call, caller changes their mind |
 | 4 · routing | Seven problems on a Monday morning, each transferred to the right one of seven departments |
 | 5 · hours rule | The same report at 10 AM, 3:59 PM, 4:30 PM and 7:30 AM Monday, Saturday and Veterans Day — transfer when open, ticket when closed |
@@ -567,7 +586,7 @@ The first run passed 32 of 41. The failures were real, and all are fixed:
 | Ticketing | ✓ One interface (`src/lib/tickets/types.ts`); Trello and in-memory adapters | More adapters (Jira, Monday, GitHub Issues) |
 | Understanding | ✓ Rules → yes/no gates (`gates.ts`) → deep model (`agent.ts`), raced in `brain.ts`; keyword rules as fallback | More gates as the task's routes need them |
 | City knowledge | ✓ City pack in `src/cities/bellevue/`: real departments (311 data), real numbers, hours and holidays, website snapshot + search, live MyBellevue requests | A second city to prove the swap; scheduled re-scrapes |
-| Evaluation | ✓ 41 scripted Bellevue calls through the API in test mode, scored by rules and an LLM judge | Real audio; volume layers; repeat runs |
+| Evaluation | ✓ 44 scripted Bellevue calls through the API in test mode, scored by rules and an LLM judge | Real audio; volume layers; repeat runs |
 | Tools | ✓ Find known issue, look up, create, follow, transfer (simulated) | Real transfers |
 | Model provider | ✓ Only `src/lib/llm.ts` knows it; OpenAI or any OpenAI-compatible endpoint by config | — |
 

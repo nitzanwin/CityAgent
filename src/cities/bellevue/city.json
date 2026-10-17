@@ -1,5 +1,27 @@
-{ "id": "bellevue", "name": "Bellevue, Washington", "shortName": "Bellevue", "timezone": "America/Los_Angeles", "weekdayOpenHour": 8, "weekdayCloseHour": 16, "emergencyNumber": "911", "_hours": "Office hours are City Hall's Service First desk (weekdays 8 AM-4 PM); most department lines are 8-5. Holidays: City Hall closures from the city calendar.", "holidays": [ "2026-11-11", "2026-11-26", "2026-12-25" ], "urgentLine": { "phone": "425-452-7840", "covers": "flooding, water main breaks, sewer overflows, spills and street emergencies, 24 hours a day" },
+{
+  "id": "bellevue",
+  "name": "Bellevue, Washington",
+  "shortName": "Bellevue",
+  "timezone": "America/Los_Angeles",
+  "weekdayOpenHour": 8,
+  "weekdayCloseHour": 16,
+  "emergencyNumber": "911",
+  "_hours": "Office hours are City Hall's Service First desk (weekdays 8 AM-4 PM); most department lines are 8-5. Holidays: City Hall closures from the city calendar.",
+  "holidays": [
+    "2026-11-11",
+    "2026-11-26",
+    "2026-12-25"
+  ],
+  "urgentLine": {
+    "phone": "425-452-7840",
+    "covers": "flooding, water main breaks, sewer overflows, spills and street emergencies, 24 hours a day"
+  },
   "policeNonEmergency": "425-577-5656",
+  "_inPerson": "Walk-in offices and their hours (bellevuewa.gov contact page, 2026-10-17). days: 0=Sunday … 6=Saturday. closedOnHolidays: City Hall holidays above.",
+  "inPerson": [
+    { "name": "City Hall's Service First desk", "phone": "425-452-6800", "address": "450 110th Ave NE", "days": [ 1, 2, 3, 4, 5 ], "open": 8, "close": 16, "closedOnHolidays": true },
+    { "name": "Mini City Hall", "phone": "425-452-2800", "days": [ 1, 2, 3, 4, 5, 6 ], "open": 10, "close": 18, "closedOnHolidays": true }
+  ],
   "sources": [
     {
       "label": "City website",
@@ -45,14 +67,14 @@
   },
   "_departments": "Bellevue's real departments and what they handle, from MyBellevue 311 data (34,576 requests, Jun 2021 - Oct 2026). Phones and hours from bellevuewa.gov, 2026-10-17.",
   "departments": [
-    { "id": "transportation", "name": "Transportation", "covers": "potholes and street repairs, traffic signals, streetlights, sidewalks, road debris, overgrown vegetation along roads, street signs, traffic concerns, and scooters or bikes parked in the way", "phone": "425-452-6856", "hours": "weekdays 8 AM to 5 PM", "keywords": ["pothole", "hole", "road", "street", "streetlight", "light", "signal", "sidewalk", "sign", "debris", "traffic", "scooter", "bike", "lime"] },
-    { "id": "utilities", "name": "Utilities", "covers": "water leaks, water quality, drainage and flooding, sewer problems, spills and pollution, garbage and recycling, and utility bills", "phone": "425-452-6932", "hours": "weekdays 8 AM to 5 PM; billing 425-452-6973", "keywords": ["water", "water main", "leak", "leaking", "flood", "flooding", "drain", "drainage", "sewer", "spill", "pollution", "garbage", "recycling", "bill"] },
-    { "id": "police", "name": "Police Department", "covers": "non-emergency police matters: parking enforcement, abandoned vehicles, traffic enforcement requests and contacting your police sector captain", "phone": "425-577-5656", "hours": "non-emergency line (NORCOM)", "keywords": ["parking", "parked", "abandoned", "vehicle", "car", "speeding"] },
-    { "id": "development-services", "name": "Development Services", "covers": "code violations such as property upkeep, construction without permits, zoning and construction noise, graffiti, and landmark tree removal", "phone": "425-452-2047", "hours": "Code Compliance, weekdays 8 AM to 4 PM", "keywords": ["code", "violation", "permit", "zoning", "construction", "noise", "graffiti", "tag", "tagging"] },
-    { "id": "community-development", "name": "Community Development", "covers": "abandoned shopping carts and help resolving conflicts with neighbors", "phone": "425-452-7892", "hours": "weekdays 8 AM to 5 PM; Conflict Resolution Center 425-452-4091", "keywords": ["shopping cart", "cart", "neighbor", "neighbour", "conflict", "dispute"] },
-    { "id": "parks", "name": "Parks & Community Services", "covers": "parks, trails, park trees, playground equipment, trash in parks, pet waste and dogs off leash", "phone": "425-452-6885", "hours": "weekdays 8 AM to 5 PM", "keywords": ["park", "playground", "trail", "tree", "swing", "dog", "leash", "pet"] },
-    { "id": "city-managers-office", "name": "City Manager's Office", "covers": "homelessness assistance and outreach, including encampments", "phone": "425-452-7228", "hours": "weekdays", "keywords": ["homeless", "homelessness", "encampment", "tent", "tents"] },
-    { "id": "fire", "name": "Fire Department", "covers": "non-emergency fire matters: fireworks reports, dry vegetation fire hazards, fire station tours and community event requests", "phone": "425-452-6892", "hours": "weekdays 8 AM to 5 PM", "keywords": ["firework", "fireworks", "tour", "dry grass"] },
+    { "id": "transportation", "name": "Transportation", "covers": "potholes and street repairs, traffic signals, streetlights, sidewalks, road debris, overgrown vegetation along roads, street signs, traffic concerns, and scooters or bikes parked in the way", "phone": "425-452-6856", "hours": "weekdays 8 AM to 5 PM", "keywords": [ "pothole", "hole", "road", "street", "streetlight", "light", "signal", "sidewalk", "sign", "debris", "traffic", "scooter", "bike", "lime" ] },
+    { "id": "utilities", "name": "Utilities", "covers": "water leaks, water quality, drainage and flooding, sewer problems, spills and pollution, garbage and recycling, and utility bills", "phone": "425-452-6932", "hours": "weekdays 8 AM to 5 PM; billing 425-452-6973", "keywords": [ "water", "water main", "leak", "leaking", "flood", "flooding", "drain", "drainage", "sewer", "spill", "pollution", "garbage", "recycling", "bill" ] },
+    { "id": "police", "name": "Police Department", "covers": "non-emergency police matters: parking enforcement, abandoned vehicles, traffic enforcement requests and contacting your police sector captain", "phone": "425-577-5656", "hours": "non-emergency line (NORCOM)", "keywords": [ "parking", "parked", "abandoned", "vehicle", "car", "speeding" ] },
+    { "id": "development-services", "name": "Development Services", "covers": "code violations such as property upkeep, construction without permits, zoning and construction noise, graffiti, and landmark tree removal", "phone": "425-452-2047", "hours": "Code Compliance, weekdays 8 AM to 4 PM", "keywords": [ "code", "violation", "permit", "zoning", "construction", "noise", "graffiti", "tag", "tagging" ] },
+    { "id": "community-development", "name": "Community Development", "covers": "abandoned shopping carts and help resolving conflicts with neighbors", "phone": "425-452-7892", "hours": "weekdays 8 AM to 5 PM; Conflict Resolution Center 425-452-4091", "keywords": [ "shopping cart", "cart", "neighbor", "neighbour", "conflict", "dispute" ] },
+    { "id": "parks", "name": "Parks & Community Services", "covers": "parks, trails, park trees, playground equipment, trash in parks, pet waste and dogs off leash", "phone": "425-452-6885", "hours": "weekdays 8 AM to 5 PM", "keywords": [ "park", "playground", "trail", "tree", "swing", "dog", "leash", "pet" ] },
+    { "id": "city-managers-office", "name": "City Manager's Office", "covers": "homelessness assistance and outreach, including encampments", "phone": "425-452-7228", "hours": "weekdays", "keywords": [ "homeless", "homelessness", "encampment", "tent", "tents" ] },
+    { "id": "fire", "name": "Fire Department", "covers": "non-emergency fire matters: fireworks reports, dry vegetation fire hazards, fire station tours and community event requests", "phone": "425-452-6892", "hours": "weekdays 8 AM to 5 PM", "keywords": [ "firework", "fireworks", "tour", "dry grass" ] },
     { "id": "general", "name": "City Hall Customer Service", "covers": "general questions and anything that doesn't fit another department", "phone": "425-452-6800", "hours": "Service First desk, weekdays 8 AM to 4 PM; interpretation in over 240 languages", "keywords": [] }
   ]
 }

@@ -41,7 +41,7 @@ No real transfers occur yet.
 
 ## Evaluation
 
-41 scripted Bellevue calls, one or more per requirement of the brief, run through the real API in test mode (simulated clock, isolated ticket store, frozen city data, a trace of every decision) and scored by rules and an LLM judge. Latest results: [`evals/reports/latest.md`](evals/reports/latest.md).
+44 scripted Bellevue calls, one or more per requirement of the brief, run through the real API in test mode (simulated clock, isolated ticket store, frozen city data, a trace of every decision) and scored by rules and an LLM judge. Latest results: [`evals/reports/latest.md`](evals/reports/latest.md).
 
 ```bash
 npm run eval                                    # against the deployed app (needs .env.local)
