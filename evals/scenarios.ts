@@ -46,7 +46,7 @@ export const scenarios: Scenario[] = [
     expect: { says: [/leash/i], judge: "Says dogs must be on a leash in parks (mentioning off-leash areas is fine), without inventing rules." } },
   { id: "code-parked-car", requirement: "1 · code & website", title: "Car parked for weeks", at: SAT,
     turns: ["A car has been parked on my street without moving for two weeks. Is that allowed, and who handles it?"],
-    expect: { says: [/police|parking/i], judge: "Says who handles it (police / parking enforcement, or reporting through MyBellevue) and gives a way to report it. Only states a time limit if it comes from the city code; never invents one." } },
+    expect: { says: [/police|parking/i], judge: "Says who handles it (police / parking enforcement) and gives a way to report it: offering to take the report counts, as do the police non-emergency number or MyBellevue. A time limit must come from the city knowledge or tool results, never invented." } },
   { id: "code-street-parking", requirement: "1 · code & website", title: "How long can a car stay parked (BCC 11.23.020)", at: SAT,
     turns: ["How long can I leave my car parked on the street in front of my house?"],
     expect: { says: [/24 hours|twenty-four hours/i], judge: "Says a car can't stay in the same place on a public street for more than 24 hours (it must move to a different block), without inventing other limits." } },

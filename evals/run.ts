@@ -8,7 +8,7 @@
 //
 // Needs VAPI_LLM_SECRET (the endpoint's secret) and OPENAI_API_KEY (for simulated callers and the judge),
 // read from .env.local.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { scenarios, type Expect, type Scenario } from "./scenarios";
 
@@ -82,12 +82,14 @@ function outcomes(turns: Turn[]) {
   };
 }
 
+// The judge sees what the agent always knows (the city knowledge in its prompt) as well as its tool results.
+const CITY_KNOWLEDGE = readFileSync(path.join(process.cwd(), "src/cities/bellevue/knowledge.md"), "utf8");
 async function judge(scenario: Scenario, turns: Turn[], rubric: string): Promise<Check> {
   const transcript = turns.map(t => `Caller: ${t.caller}\nAgent: ${t.reply}`).join("\n");
   const tools = turns.flatMap(t => t.trace?.tools ?? []).map(c => `- ${c.name}(${JSON.stringify(c.args ?? {})}) → ${JSON.stringify(c.result ?? {}).slice(0, 8000)}`).join("\n") || "(none)";
   const raw = await openai({ model: JUDGE_MODEL, temperature: 0, response_format: { type: "json_object" }, messages: [
-    { role: "system", content: "You grade a call to a city's AI phone receptionist against a rubric. Reply with JSON: {\"pass\": true|false, \"reason\": \"one sentence\"}. Pass only if the rubric is fully met; judge substance, not wording. Facts that appear in the agent's tool results (shown below) or in the city's published information are not invented; only count something as invented if nothing supports it." },
-    { role: "user", content: `Simulated time: ${scenario.at} (Bellevue). Rubric: ${rubric}\n\nTranscript:\n${transcript}\n\nTool calls:\n${tools}` },
+    { role: "system", content: "You grade a call to a city's AI phone receptionist against a rubric. Reply with JSON: {\"pass\": true|false, \"reason\": \"one sentence\"}. Pass only if the rubric is fully met; judge substance, not wording. Facts that appear in the city knowledge the agent always has or in its tool results (both shown below) are not invented; only count something as invented if nothing supports it." },
+    { role: "user", content: `Simulated time: ${scenario.at} (Bellevue). Rubric: ${rubric}\n\nTranscript:\n${transcript}\n\nTool calls:\n${tools}\n\nCity knowledge the agent always has:\n${CITY_KNOWLEDGE}` },
   ] });
   const verdict = JSON.parse(raw) as { pass: boolean; reason: string };
   return { name: "judge", pass: verdict.pass, detail: verdict.reason };
