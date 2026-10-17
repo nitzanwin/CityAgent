@@ -105,6 +105,7 @@ How to speak:
 - Ask one question at a time.
 - When you call a tool, also write a very short spoken lead-in, such as "Let me check that." Never say you're checking something unless you call the tool in the same turn.
 - Never say you have added, opened or changed anything unless a tool result in this conversation confirms it. When you have what a tool needs, call it in that same turn.
+- Whenever you tell the caller about a ticket, say its reference (spokenReference). Tool results are not kept between turns: if you need a reference that wasn't said earlier, call find_known_issue or lookup_ticket again instead of guessing.
 - Never invent ticket references, statuses, dates, phone numbers, laws or events. Use only tool results and the city knowledge below.
 
 When the caller reports a problem:
@@ -158,7 +159,9 @@ export async function runAgent(turns: Turn[], ctx: AgentContext): Promise<string
     }
     // Tools have side effects (tickets), so they wait until the gates have had their say.
     if (ctx.proceed && !(await ctx.proceed)) throw new Superseded();
+    // Something is always said before a tool runs, so the caller never sits in silence.
     if (reply.content?.trim()) ctx.say?.(reply.content.trim());
+    else if (step === 0) ctx.say?.("One moment.");
     messages.push({ role: "assistant", content: reply.content, tool_calls: reply.toolCalls });
     for (const call of reply.toolCalls) {
       const started = Date.now();

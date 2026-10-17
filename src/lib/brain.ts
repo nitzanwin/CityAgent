@@ -22,12 +22,14 @@ export async function think(messages: ChatMessage[], ctx: ThinkContext): Promise
     return reply;
   }
 
+  const tickets = ctx.tickets ?? ticketSystem();
+  void tickets.list().catch(() => {}); // warm the ticket system's cache while the models think
   const transcript = turns.slice(-8).map(t => `${t.role === "user" ? "Caller" : "CityDesk"}: ${t.text}`).join("\n");
   const gates: Promise<GateResult[]> = runTurnGates(transcript, { chat: ctx.chat }).catch(() => []);
   const answered = gates.then(fastPath);
   const abort = new AbortController();
   const deep = runAgent(turns, {
-    now: ctx.now, callerNumber: ctx.callerNumber, tickets: ctx.tickets ?? ticketSystem(), chat: ctx.chat, signal: abort.signal, say: ctx.say,
+    now: ctx.now, callerNumber: ctx.callerNumber, tickets, chat: ctx.chat, signal: abort.signal, say: ctx.say,
     proceed: answered.then(fast => !fast), log: (_, data) => data && tools.push(data),
   });
 

@@ -15,14 +15,19 @@ Live and callable:
   on screen: no text box, no transcript.
 - **Phone line:** +1 425-476-9822 (free Vapi number; US only, incoming calls).
 - **Brain:** `POST /api/vapi/chat/completions` on our server, protected by a
-  shared secret. Replies are still **rule-based** — the starter's keyword
-  routing, rephrased for speech. No model is called yet.
+  shared secret. Flow v2: yes/no gates race a tool-using model
+  (`gpt-4.1-nano` for gates, `gpt-4.1` for the conversation); the old
+  keyword rules are only a fallback.
+- **Tickets:** a Trello board, "CityDesk — Bellevue (demo)", with one list
+  per status and five seeded known issues (CD-1001 to CD-1005).
 - **Deploys:** every push to `main` redeploys on Vercel.
 
-What a caller can do today: report an issue (routed to a department; outside
-office hours they are offered a ticket, and a "yes" opens a mock ticket), or
-ask about events, local rules or general information (pointed to the city
-website, never reading a link aloud).
+What a caller can do today: report a problem (the agent names the department,
+checks known issues, collects what / where / name / number, reads it back,
+opens a Trello ticket and says who follows up and when), join an existing
+ticket instead of duplicating it, ask about their ticket by reference or
+caller ID, get the 911 warning in an emergency, or ask a general question
+answered from the city's knowledge file.
 
 ## The task
 
@@ -231,7 +236,9 @@ call, working on the internet, not a local demo.
 3. ✓ Create the Vapi assistant pointing at that endpoint, attach a phone
    number, and make a real call. Also: a voice-only call screen on the
    website.
-4. **Next:** layer on the yes/no gates, the deep model, the tools and Trello.
+4. ✓ Layer on the yes/no gates, the deep model, the tools and Trello
+   (flow v2), tested end to end with simulated callers against the real
+   model and board.
 
 A real call working end to end early means everything after it is
 improvement, not risk.
@@ -301,16 +308,19 @@ Each turn reads the whole conversation, not just the last sentence.
 | Area | Now | Where this plan takes it |
 |---|---|---|
 | Voice | ✓ Vapi: phone number + voice-only call screen (`src/app/page.tsx`) | Real call transfers |
-| Ticketing | Trello or mock, hard-wired in `src/lib/tickets.ts` | Integration interface; Trello is one adapter |
-| Understanding | Keyword matching + regex (`src/lib/routing.ts`), phrased for speech in `src/lib/reply.ts` | Rules → yes/no gates → deep model |
-| City knowledge | Bellevue hard-coded in `src/lib/city.ts` | Per-city pack of config + Markdown |
-| Tools | None; the endpoint decides and answers directly | Agent-invoked tools with verbal replies |
+| Ticketing | ✓ One interface (`src/lib/tickets/types.ts`); Trello and in-memory adapters | More adapters (Jira, Monday, GitHub Issues) |
+| Understanding | ✓ Rules → yes/no gates (`gates.ts`) → deep model (`agent.ts`), raced in `brain.ts`; keyword rules as fallback | More gates as the task's routes need them |
+| City knowledge | ✓ City pack in `src/cities/bellevue/` (config, `knowledge.md`, known issues) | A second city to prove the swap |
+| Tools | ✓ Find known issue, look up, create, follow, transfer (simulated) | Real transfers |
+| Model provider | ✓ Only `src/lib/llm.ts` knows it; OpenAI or any OpenAI-compatible endpoint by config | — |
 
 ## Open questions
 
 - Which yes/no gates map to the task's known routes? (Needs the task brief.)
-- Does Vapi send the whole conversation on every turn? The ticket "yes"
-  follow-up depends on it — confirm on the first real call.
+- Vapi ended the caller's turn on a short mid-sentence pause in the first
+  test call; tune how long it waits before replying.
+- OpenAI rate limits are per model and were very low on a new account; keep
+  the gate and conversation models different, or use a gateway.
 - Lock the Vapi public key to `cityagent.vercel.app` and the CityDesk
   assistant before sharing the link widely?
 - What latency budget do we hold a caller to before the first word back?
