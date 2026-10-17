@@ -32,8 +32,9 @@ Copy `.env.example` to `.env.local`. On Vercel the same variables live in Projec
 | `NEXT_PUBLIC_VAPI_PUBLIC_KEY` | Browser-safe Vapi key for the call screen |
 | `NEXT_PUBLIC_VAPI_ASSISTANT_ID` | The Vapi assistant the call button dials |
 | `OPENAI_API_KEY` | Model provider key; without it, replies fall back to the rule-based routing |
-| `LLM_GATE_MODEL`, `LLM_AGENT_MODEL` | Optional model overrides (defaults `gpt-4.1-nano` for yes/no gates, `gpt-4.1-mini` for the conversation) |
+| `LLM_GATE_MODEL`, `LLM_AGENT_MODEL` | Optional model overrides (defaults `gpt-4.1-nano` for yes/no gates, `gpt-4.1` for the conversation; rate limits are per model, so keep them different) |
 | `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_BOARD_ID` | Optional; Trello as the ticketing system. `npm run setup:trello` creates the board and prints the ID. Without all three, tickets live in memory and are **not persistent** |
+| `LLM_BASE_URL`, `LLM_API_KEY` | Optional; any OpenAI-compatible provider instead of OpenAI directly (e.g. Vercel AI Gateway, with models named `openai/gpt-4.1`) |
 | `CITY` | Optional; which city pack in `src/cities` to use (default `bellevue`) |
 
 No real transfers occur yet.

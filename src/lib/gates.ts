@@ -25,13 +25,14 @@ export async function yesNo(question: string, context: string, { chat = defaultC
 
 // Checked on every caller turn, before (and in parallel with) the deep model.
 export const TURN_GATES = [
-  { id: "emergency", question: "Is someone's life or safety in immediate danger right now (fire, crime in progress, medical emergency, gas leak, someone injured or trapped)?" },
+  { id: "emergency", question: "Does the caller's most recent message describe someone's life or safety in immediate danger right now (fire, crime in progress, medical emergency, gas leak, someone injured or trapped)? Answer no if that message only thanks, says goodbye, or confirms they are calling 911." },
   { id: "goodbye", question: "Is the caller clearly finished and ending the call (for example \"no, that's all\" or \"thanks, bye\")? Answer no if they are answering a question, giving details, correcting something, or still need help." },
 ] as const;
 
 export async function runTurnGates(transcript: string, options: { chat?: Chat; signal?: AbortSignal } = {}): Promise<GateResult[]> {
   const context = `Conversation so far (most recent last):\n${transcript}`;
   const settled = await Promise.allSettled(TURN_GATES.map(async g => ({ id: g.id, ...(await yesNo(g.question, context, options)) })));
+  settled.forEach((s, i) => s.status === "rejected" && console.warn(JSON.stringify({ event: "gate-error", gate: TURN_GATES[i].id, error: String(s.reason).slice(0, 200) })));
   return settled.flatMap(s => (s.status === "fulfilled" ? [s.value] : []));
 }
 

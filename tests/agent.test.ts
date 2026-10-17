@@ -27,7 +27,7 @@ const turns: Turn[] = [{ role: 'assistant', text: 'Welcome to Bellevue CityDesk.
 
 test('a known problem is matched by yes/no checks and reported back instead of a duplicate', async () => {
   const { chat, agentRequests } = fakeModel(
-    [toolCall('find_known_issue', { issue: 'Big pothole', location: 'NE 8th St at 112th' }), { content: "That's already reported and scheduled for Tuesday.", toolCalls: [] }],
+    [toolCall('find_known_issue', { department: 'public-works', issue: 'Big pothole', location: 'NE 8th St at 112th' }), { content: "That's already reported and scheduled for Tuesday.", toolCalls: [] }],
     prompt => (prompt.includes('Existing ticket: Large pothole') ? 0.97 : 0.03),
   );
   const said: string[] = [];
@@ -87,4 +87,43 @@ test('if the model fails, the rule-based reply keeps the call going', async () =
   const chat: Chat = async () => { throw new Error('Model provider returned 429'); };
   const reply = await think([{ role: 'user', content: 'There is a pothole on my street' }], { now: SATURDAY, chat, tickets: tickets() });
   assert.match(reply, /Public Works/);
+});
+
+test('a created ticket is confirmed to the caller even if the model fails right after', async () => {
+  const store = tickets();
+  let calls = 0;
+  const chat: Chat = async request => {
+    if (!request.tools) return answer(0.02);
+    if (calls++ === 0) return toolCall('create_ticket', { department: 'public-works', title: 'Pothole', issue: 'Hole', location: '200th Ave', name: 'Dana', phone: '+14255550123' }, null);
+    throw new Error('Model provider returned 429');
+  };
+  const reply = await runAgent(turns, { now: SATURDAY, tickets: store, chat });
+  assert.match(reply, /^I've opened your ticket\. Your reference is C D 1 0 0 6\. Public Works will review it when they reopen on Monday at 8 AM\./);
+  assert.match(reply, /contact Dana at \+14255550123/);
+});
+
+test('mid-conversation, a model failure asks the caller to repeat instead of restarting the rules', async () => {
+  process.env.OPENAI_API_KEY ||= 'test';
+  const chat: Chat = async () => { throw new Error('Model provider returned 500'); };
+  const messages = [{ role: 'user', content: 'There is a hole in my street' }, { role: 'assistant', content: 'Where exactly is it?' }, { role: 'user', content: 'At 200th and 3rd' }];
+  assert.equal(await think(messages, { now: SATURDAY, chat, tickets: tickets() }), 'Sorry, I missed that. Could you say it again?');
+});
+
+test('a bare "let me check" with no tool call is spoken, and the model is made to act', async () => {
+  const { chat, agentRequests } = fakeModel([{ content: 'Let me check that.', toolCalls: [] }, toolCall('lookup_ticket', { reference: '1001' }, null), { content: 'It is scheduled for Tuesday.', toolCalls: [] }]);
+  const said: string[] = [];
+  assert.equal(await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, say: t => said.push(t) }), 'It is scheduled for Tuesday.');
+  assert.deepEqual(said, ['Let me check that.']);
+  assert.equal(agentRequests.length, 3);
+});
+
+test('known-issue checks only ask the model about tickets at a matching place', async () => {
+  const { placeWords } = await import('../src/lib/agent');
+  assert.deepEqual(placeWords('NE 8th Street at 112th Avenue NE'), ['8', '112']);
+  assert.deepEqual(placeWords('the playground at Downtown Park'), ['playground', 'downtown', 'park']);
+  let gateCalls = 0;
+  const { chat, agentRequests } = fakeModel([toolCall('find_known_issue', { department: 'public-works', issue: 'Hole', location: '200th Avenue and 3rd Street' })], () => { gateCalls++; return 0.9; });
+  await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat });
+  assert.equal(gateCalls, 0);
+  assert.equal(toolResults(agentRequests[1])[0].known, false);
 });

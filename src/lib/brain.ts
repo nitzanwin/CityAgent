@@ -44,7 +44,9 @@ export async function think(messages: ChatMessage[], ctx: ThinkContext): Promise
     return reply;
   } catch (e) {
     if (e instanceof Superseded) throw e;
-    log("rules-fallback", { error: e instanceof Error ? e.message.slice(0, 160) : String(e) });
-    return replyFor(messages, ctx.now);
+    // The rules only understand a single sentence, so mid-conversation they'd ignore everything said so far.
+    const firstTurn = turns.filter(t => t.role === "user").length === 1;
+    log(firstTurn ? "rules-fallback" : "retry", { error: e instanceof Error ? e.message.slice(0, 160) : String(e) });
+    return firstTurn ? replyFor(messages, ctx.now) : "Sorry, I missed that. Could you say it again?";
   }
 }
