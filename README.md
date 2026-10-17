@@ -20,9 +20,27 @@ npm run dev
 
 Open http://localhost:3000. Run `npm test`, `npm run typecheck`, and `npm run build` before deploying.
 
-## Trello (optional)
+Live: https://cityagent.vercel.app (call screen) and +1 425-476-9822 (phone). See `PLAN.md` for the approach and current status.
 
-Copy `.env.example` to `.env.local` and supply Trello API key, token, and destination list ID. Without all three settings, **ticket creation is mock-only**. No real transfers occur in this starter.
+## Configuration
+
+Copy `.env.example` to `.env.local`. On Vercel the same variables live in Project Settings → Environment Variables; the `NEXT_PUBLIC_` ones are read at build time, so redeploy after changing them.
+
+| Variable | Purpose |
+|---|---|
+| `VAPI_LLM_SECRET` | Shared secret Vapi sends with every turn; the brain endpoint rejects requests without it |
+| `NEXT_PUBLIC_VAPI_PUBLIC_KEY` | Browser-safe Vapi key for the call screen |
+| `NEXT_PUBLIC_VAPI_ASSISTANT_ID` | The Vapi assistant the call button dials |
+| `OPENAI_API_KEY` | Model provider key (not used yet) |
+| `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_LIST_ID` | Optional; without all three, **ticket creation is mock-only** |
+
+No real transfers occur yet.
+
+## Vapi setup
+
+- **Assistant model:** provider `custom-llm`, URL `https://<host>/api/vapi`. Vapi appends `/chat/completions` itself.
+- **Credential:** a `custom-llm` credential whose API key equals `VAPI_LLM_SECRET`; Vapi sends it as `Authorization: Bearer`.
+- **Phone number:** a free Vapi number assigned to the assistant.
 
 ## Architecture
 

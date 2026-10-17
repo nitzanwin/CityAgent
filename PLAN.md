@@ -4,6 +4,26 @@ A living document. It explains how I want this project approached and what I
 want to protect as it grows. It is not a spec: sections get added and revised
 as we go.
 
+## Status
+
+_Last updated 2026-10-17._
+
+Live and callable:
+
+- **Web call screen:** https://cityagent.vercel.app — one "Start call" button,
+  then a live voice call in the browser (call timer, mute, end). Nothing else
+  on screen: no text box, no transcript.
+- **Phone line:** +1 425-476-9822 (free Vapi number; US only, incoming calls).
+- **Brain:** `POST /api/vapi/chat/completions` on our server, protected by a
+  shared secret. Replies are still **rule-based** — the starter's keyword
+  routing, rephrased for speech. No model is called yet.
+- **Deploys:** every push to `main` redeploys on Vercel.
+
+What a caller can do today: report an issue (routed to a department; outside
+office hours they are offered a ticket, and a "yes" opens a mock ticket), or
+ask about events, local rules or general information (pointed to the city
+website, never reading a link aloud).
+
 ## The task
 
 An automated phone system for a city: a caller rings in, the agent understands
@@ -95,19 +115,21 @@ create a ticket.
 
 ## Architecture
 
-**Decision: a hosted voice platform (Vapi or Retell) for the voice, our own
-server for the thinking.**
+**Decision: Vapi for the voice, our own server for the thinking.**
 
-The voice platform handles the phone number, speech-to-text, text-to-speech,
-detecting when the caller has finished speaking, and interruptions. On every
-turn it sends what the caller said to our server (its "custom LLM" option) and
-speaks whatever text we send back. Everything that decides the answer runs on
-our server.
+Vapi handles the phone number, speech-to-text, text-to-speech, detecting when
+the caller has finished speaking, and interruptions. On every turn it sends
+what the caller said to our server (its "custom LLM" option) and speaks
+whatever text we send back. Everything that decides the answer runs on our
+server.
+
+Callers reach the same assistant two ways: the phone number, or the call screen
+on our website (Vapi's web SDK).
 
 ### How a call flows
 
 ```
-VAPI / RETELL   phone line → speech-to-text → detects the end of the caller's turn
+VAPI            phone line or web call → speech-to-text → detects the end of the caller's turn
                      │ what the caller said
                      ▼
 OUR SERVER      rules              (no model)
@@ -116,7 +138,7 @@ OUR SERVER      rules              (no model)
                 → tools            (city knowledge, ticketing)
                      │ reply text, streamed
                      ▼
-VAPI / RETELL   text-to-speech → phone line
+VAPI            text-to-speech → back to the caller
 ```
 
 ### Why this setup
@@ -174,14 +196,15 @@ call, working on the internet, not a local demo.
   in the repo.
 - If we use Retell: support for long-lived WebSocket connections (see below).
 
-### Recommended setup (to confirm)
+### Setup (live)
 
-- **Vapi** for the voice, with a phone number from Vapi.
-- **Vercel** for our server: it imports the GitHub repo, redeploys on every
+- **Vapi** for the voice: the CityDesk assistant, pointed at our server, and
+  the phone number above.
+- **Vercel** for our server: connected to the GitHub repo, redeploys on every
   push to `main`, supports streaming, and runs Next.js with no extra setup.
-- **How the tester reaches it:** they call the phone number, or press a "Call"
-  button on the deployed page (Vapi's web SDK). The button matters if the
-  tester is outside the US, where calling a US number costs them.
+- **How the tester reaches it:** the call screen at
+  https://cityagent.vercel.app (works from any country; needs a microphone),
+  or the phone number (US only).
 
 ### How this shapes the architecture
 
@@ -201,31 +224,34 @@ call, working on the internet, not a local demo.
 
 ### Build order: first working call in 1–2 hours
 
-1. Deploy the starter as it is to Vercel and confirm it loads at a public URL.
-2. Add the brain endpoint (OpenAI-compatible, streamed), first backed by the
+1. ✓ Deploy the starter as it is to Vercel and confirm it loads at a public
+   URL.
+2. ✓ Add the brain endpoint (OpenAI-compatible, streamed), first backed by the
    existing rule-based routing only — no model yet.
-3. Create the Vapi assistant pointing at that endpoint, attach a phone number,
-   and make a real call.
-4. Then layer on the yes/no gates, the deep model, the tools and Trello.
+3. ✓ Create the Vapi assistant pointing at that endpoint, attach a phone
+   number, and make a real call. Also: a voice-only call screen on the
+   website.
+4. **Next:** layer on the yes/no gates, the deep model, the tools and Trello.
 
 A real call working end to end early means everything after it is
 improvement, not risk.
 
-## Where the starter code stands
+## Where things stand
 
-| Area | Starter today | Where this plan takes it |
+| Area | Now | Where this plan takes it |
 |---|---|---|
-| Voice | Browser Web Speech only (`src/app/page.tsx`) | Real phone calls through Vapi or Retell, with our server as the brain |
+| Voice | ✓ Vapi: phone number + voice-only call screen (`src/app/page.tsx`) | Real call transfers |
 | Ticketing | Trello or mock, hard-wired in `src/lib/tickets.ts` | Integration interface; Trello is one adapter |
-| Understanding | Keyword matching + regex (`src/lib/routing.ts`) | Rules → yes/no gates → deep model |
+| Understanding | Keyword matching + regex (`src/lib/routing.ts`), phrased for speech in `src/lib/reply.ts` | Rules → yes/no gates → deep model |
 | City knowledge | Bellevue hard-coded in `src/lib/city.ts` | Per-city pack of config + Markdown |
-| Tools | None; the API route decides and answers directly | Agent-invoked tools with verbal replies |
+| Tools | None; the endpoint decides and answers directly | Agent-invoked tools with verbal replies |
 
 ## Open questions
 
-- Vapi or Retell for the demo? (Hosting leans Vapi — see Deployment.)
-- Hosting: Vercel, or another host that meets the needs under Deployment?
-- Will the tester call from inside the US, or do we need the browser call button?
 - Which yes/no gates map to the task's known routes? (Needs the task brief.)
+- Does Vapi send the whole conversation on every turn? The ticket "yes"
+  follow-up depends on it — confirm on the first real call.
+- Lock the Vapi public key to `cityagent.vercel.app` and the CityDesk
+  assistant before sharing the link widely?
 - What latency budget do we hold a caller to before the first word back?
 - _More as we go._
