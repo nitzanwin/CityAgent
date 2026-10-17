@@ -318,7 +318,8 @@ Each turn reads the whole conversation, not just the last sentence.
 
 - Which yes/no gates map to the task's known routes? (Needs the task brief.)
 - Vapi ended the caller's turn on a short mid-sentence pause in the first
-  test call; tune how long it waits before replying.
+  test call. Now using LiveKit smart endpointing with a 0.6s minimum wait;
+  confirm on the next real call.
 - OpenAI rate limits are per model and were very low on a new account; keep
   the gate and conversation models different, or use a gateway.
 - Lock the Vapi public key to `cityagent.vercel.app` and the CityDesk
