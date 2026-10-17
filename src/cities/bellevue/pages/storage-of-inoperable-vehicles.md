@@ -27,8 +27,6 @@ Screening may consist of:
 - A legally permitted solid structure
 - Dense landscaping, at least six feet in height
 
-
-
 #### Permitted Solid Structures
 
 Possible structures may include a garage, house, shed, playhouse, solid walls of a carport or a guest house. Legally permitted refers to structures which meet all applicable city codes.

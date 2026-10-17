@@ -15,8 +15,6 @@ Our goal is to inform, educate and provide a reasonable opportunity for voluntar
 
 Code Compliance officers aspire to serve as neighborhood stewards, working to achieve successful resolutions by building harmonious partnerships among our diverse communities. The team's mission is to provide comprehensive education and consistent, fair, equitable and responsive enforcement that promotes voluntary compliance.
 
-
-
 ### Possible Code Violations
 
 Code compliance officers respond to your concerns about:
@@ -66,8 +64,6 @@ Email
 codecompliance@bellevuewa.gov
 
 Business Hours
-
-
 
 ## Development Services
 

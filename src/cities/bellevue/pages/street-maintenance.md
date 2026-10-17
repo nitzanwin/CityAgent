@@ -13,7 +13,6 @@ The Transportation Department's street maintenance group protects the significan
 
 Staff respond quickly to issues such as potholes, collision debris, trees blocking the roadway, vegetation blocking sight lines and tripping hazards. Standby support for maintenance needs is available 24/7 on an on-call basis. During severe storms, staff work around the clock to keep streets passable on a prioritized basis.
 
-
 ## Contact
 
 **Operations and Maintenance 24-Hour Response Line**
@@ -25,4 +24,3 @@ Telephone
 Email
 
 O&MSupport@bellevuewa.gov
-

@@ -32,9 +32,7 @@ Learn how we take projects from an idea to completion in our new, two part video
 - Report a street maintenance issue: Call 425-452-7840 (Operations and Maintenance 24-Hour Emergency Response line) or email O&MSupport@bellevuewa.gov during business hours to report a street maintenance issue or make a street cleaning request. Call 911 for urgent issues such as malfunctioning traffic signals, down or damaged stop or yield signs, a downed tree completely blocking a street and other hazardous road conditions.
 - Title VI Notice and ADA/Title VI Notices
 
-
 Receive email notification for transportation-related news releases
-
 
 ## Transportation
 
@@ -49,5 +47,3 @@ trreception@bellevuewa.gov
 Hours
 
 8 a.m.-5 p.m.
-
-

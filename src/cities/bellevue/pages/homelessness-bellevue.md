@@ -47,11 +47,9 @@ Here are answers to some frequently asked questions about permanent supportive h
 
     Permanent supportive housing (PSH) is a proven, cost-effective and compassionate housing model used to help people out of homelessness. “Permanent” means that there is no time limit for the housing. “Supportive,” means that the building offers on-site services, telehealth, and connections to local service providers that help residents thrive.
 
-
 - ###### **What services are available on site at a PSH facility?**
 
     Permanent supportive housing is designed to support people living with complex and disabling health conditions. In addition to housing, permanent supportive facilities provide residents with access to a range of on- and off-site services designed to help them recover from experiencing homelessness and ultimately achieve housing stability. Services include 24/7 staffing, case management, community activities, counseling, health care and additional programs.
-
 
 - ###### **How are the services at PHS facilities funded?**
 
@@ -59,11 +57,9 @@ Here are answers to some frequently asked questions about permanent supportive h
 
     Plymouth Crossing’s operational funders include King County Housing Authority through project-based vouchers, the City of Bellevue’s Housing Stability Program, King County’s Department of Community and Human Services and the Washington Department of Commerce Permanent Supportive Housing Operating, Maintenance, and Services program.
 
-
 - ###### **How do residents come to Plymouth Crossing?**
 
     Many residents are connected through the county-wide referral system called Coordinated Entry. Plymouth Crossing also partners with local agencies, including the City of Bellevue, to refer individuals directly from the community. A key role of on-site case managers and community specialists is to help residents stay connected to services within the community in which they’ve most recently resided. For Plymouth Crossing, a concerted effort is made to receive referrals from Porchlight Men’s Shelter, The Sophia Way and as many other Eastside partners as possible, including the City of Bellevue’s Homelessness Outreach Program. As a result, many Plymouth Crossing residents have strong connections to the Eastside and are able to stay within their community.
-
 
 - ###### **What kind of background check is required for Plymouth Crossing residents?**
 
@@ -71,21 +67,17 @@ Here are answers to some frequently asked questions about permanent supportive h
 
     In addition, Plymouth Crossing residents must be single adults who are exiting from experiencing homelessness and be either 55 or older or have a disability. To live at Plymouth Crossing, residents must be U.S. citizens and have a social security number.  They must also pass criminal background, credit and rental history checks.
 
-
 - ###### **How does permanent supportive housing differ from shelters, adult family homes, skilled nursing facilities and other types of housing?**
 
     When a new resident moves into Plymouth Crossing, they must sign a lease and become a tenant. Unlike homelessness shelters and other transitional housing programs, residents of Plymouth Crossing can stay in their home permanently. They are expected to be able to live independently Plymouth Crossing offers opportunities for residents to engage in additional health and supportive services, but they are not required.
-
 
 - ###### **What are some of the expectations that come with signing a Plymouth Crossing lease?**
 
     Residents moving into Plymouth Crossing agree to several building rules, such as honoring specific quiet hours and not possessing weapons on-site. Residents use guest sign-in and sign-out systems to ensure that on-site staff are aware of who is on the property. Residents are expected to keep up their apartments; Plymouth staff does monthly health and safety inspections in each unit.
 
-
 - ###### **How does Plymouth Crossing address onsite drug use to ensure the safety of residents and the community at large?**
 
     Treating substance use disorder while living on the streets can be extremely challenging.  For many Plymouth Crossing residents, having a place to call home is the first step to their recovery. Once housed, residents develop relationships with onsite case managers and behavioral health providers to evaluate and address their substance use issues. Plymouth Crossing strives to meet people where they are, with individualized treatment. This effective approach is backed by decades of research.
-
 
 - ###### **How is “Housing First” different from a safe injection site or halfway house?**
 
@@ -95,13 +87,11 @@ Here are answers to some frequently asked questions about permanent supportive h
 
     Unlike safe injection sites – which are not permitted in Bellevue – Plymouth Crossing does not supervise drug use. Unlike halfway houses, abstinence is not a condition for staying housed. Residents have daily access to case managers and a full range of support services.
 
-
 - ###### **What is the eviction process for the tenants at Plymouth Crossing?**
 
     Plymouth Crossing leases include standard building rules — quiet hours, respectful use of shared spaces, timely rent, and guest and anti-harassment policies — like in market-rate housing. When violations occur, staff work closely with tenants to address issues through support services such as rent assistance, housekeeping help, social skill-building, and referrals to community partners. Plymouth staff care deeply for each of their residents and are committed to working with them to preserve their housing, which is why they continually outreach and offer options.
 
     Eviction decisions consider the severity of a tenant’s behavior and the tenant’s response to support. If someone poses a safety risk or needs care beyond what Plymouth can provide, they pursue alternate housing or eviction in service of community well-being.
-
 
 - ###### **How does Plymouth Crossing ensure residents and visitors remain safe?**
 
@@ -109,25 +99,21 @@ Here are answers to some frequently asked questions about permanent supportive h
 
     All staff are trained in trauma-informed care and certified in de-escalation. The goal is to help residents stabilize and get their needs met. In addition, Plymouth Crossing staff and the Bellevue Police Department and CCAT and CARES programs maintain strong and collaborative working relationships.
 
-
 - ###### **How do you ensure the safety of areas surrounding the Plymouth Crossing building?**
 
     Plymouth’s building rules are legally enforceable through the lease, including a strict no-weapons policy (even in vehicles), quiet hours, and property respect. The building maintains a robust guest policy to monitor access and can enforce bans or trespasses when necessary. Security cameras cover all common areas, elevators, hallways, and the building’s exterior.
 
     Safety protocols are continually evolving, tested, and developed in collaboration with professionals. Plymouth prioritizes community safety—not just for their residents, but for their neighbors. They actively foster communication and problem-solving and work closely with the City of Bellevue and the Bellevue Police Department to support neighborhood safety and create a secure environment for all.
 
-
 - ###### **What happens if a resident is convicted of a crime while they are living at Plymouth Crossing?**
 
     Plymouth adheres to all local laws and expects residents to follow them as well. They approach individual incidents on a case-by-case basis. The priority is keeping all our residents safe and housed.
-
 
 - ###### **What can the Bellevue community do to support the Plymouth Crossing project?**
 
     To stay updated with Plymouth Crossing, follow them on social media (Instagram, Facebook, LinkedIn, YouTube) or subscribe to their newsletter at plymouthhousing.org. For further questions, please consider attending their monthly Eastside Office Hours on the second Wednesday of each month, 11 a.m.-1 p.m., at the Together Center in Redmond.
 
     There are also volunteer opportunities at Plymouth Crossing. For more information on volunteering, visit plymouthhousing.org/how-you-can-help/volunteer/.
-
 
 ## Housing Stability Program
 

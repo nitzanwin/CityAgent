@@ -25,8 +25,6 @@ New locations for temporary pop-up off-leash areas will be evaluated and tested 
 - Enatai Neighborhood Park, 10643 SE 25th St.
 - Highland Glendale Property, 820 134th Ave. NE (access off of 136th Ave. NE)
 
-##
-
 Pop-up off-leash locations
 
 In 2023, the Parks & Community Services Department launched a Pop-up Dog Off-Leash Pilot Program in response to growing demand for accessible and safe spaces for pets and their owners to get exercise and enjoy the outdoors.
@@ -36,8 +34,6 @@ Enatai Neighborhood Park, 10643 SE 25th St.
 Goldsmith Park, 14475 NE 35th St.
 
 Highland Glendale Property, 820 134th Ave. NE (access off of 136th Ave. NE)
-
-##
 
 Nearby off-leash dog areas
 
@@ -60,8 +56,6 @@ Luther Burbank Park: 2040 84th Ave. SE, Mercer Island
 Marymoor Park: 6046 W. Lake Sammamish Pkwy NE, Redmond
 
 Warren G. Magnuson Dog Park: 7400 Sandpoint Way NE, Seattle
-
-##
 
 Know before you go
 
@@ -90,9 +84,7 @@ To submit an animal control complaint or enforcement request to Regional Animal 
 - Fax: 206-205-8043
 - Call: 206-296-7387 (PETS)
 
-
 Receive texts or emails about new dog faciliities at Bellevue Parks
-
 
 ## Parks & Community Services
 
@@ -104,7 +96,5 @@ Customer Assistance
 
 MyBellevue App
 
-
 **Park & Off-leash Hours**
 Dawn-Dusk
-

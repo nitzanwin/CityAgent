@@ -9,7 +9,8 @@
     "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "setup:trello": "tsx scripts/setup-trello.ts",
-    "scrape:city": "tsx scripts/scrape-city.ts"
+    "scrape:city": "tsx scripts/scrape-city.ts",
+    "eval": "tsx --env-file=.env.local evals/run.ts"
   },
   "dependencies": {
     "@vapi-ai/web": "2.7.1",
@@ -27,6 +28,7 @@
     "tsx": "^4.20.0",
     "turndown": "7.2.4",
     "turndown-plugin-gfm": "1.0.2",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "unpdf": "1.8.1"
   }
 }

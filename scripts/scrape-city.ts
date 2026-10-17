@@ -1,30 +1,38 @@
 // Scrapes a city's public website into Markdown pages for its city pack: src/cities/<id>/pages/<slug>.md.
-// The list of pages lives in src/cities/<id>/sources.json; a source with a "feed" (RSS) becomes an events snapshot.
-// Usage: npm run scrape:city -- bellevue
+// The list of pages lives in src/cities/<id>/sources.json; a source with a "feed" (RSS) becomes an events snapshot,
+// and a PDF source is converted to text. Code sources (topic "code") keep their configured title, which carries the
+// section number. Optional "slug" overrides the file name.
+// Usage: npm run scrape:city -- bellevue [--topic code]   (--topic re-scrapes only that topic's pages)
 import { load, type CheerioAPI } from "cheerio";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import TurndownService from "turndown";
 import { tables } from "turndown-plugin-gfm";
+import { extractText, getDocumentProxy } from "unpdf";
 
-type Source = { url: string; title: string; topic: string; feed?: string };
+type Source = { url: string; title: string; topic: string; feed?: string; slug?: string; note?: string };
 
 const USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36 CityDesk-demo (hackathon prototype)";
 const MAIN = ["#block-bellevue-content", "main", "#main-content", ".region-content", "article"];
 const JUNK = "script, style, noscript, img, picture, figure, svg, iframe, video, form, button, input, select, nav, header, footer, aside, .header-img, .visually-hidden, [aria-hidden=true], .breadcrumb, .contextual, .social-share, .field--name-field-header-image";
 const MAX_BYTES = 15_000;
 
-const city = process.argv[2] ?? "bellevue";
+const args = process.argv.slice(2);
+const topicFlag = args.indexOf("--topic");
+const onlyTopic = topicFlag >= 0 ? args[topicFlag + 1] : undefined;
+const city = args.find((a, i) => !a.startsWith("--") && i !== topicFlag + 1) ?? "bellevue";
 const dir = path.join(process.cwd(), "src/cities", city);
 const sources: Source[] = JSON.parse(readFileSync(path.join(dir, "sources.json"), "utf8"));
 const today = new Date().toISOString().slice(0, 10);
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function get(url: string): Promise<string> {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "text/html,application/xml" } });
+async function fetchOk(url: string, accept: string): Promise<Response> {
+  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: accept } });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.text();
+  return res;
 }
+const get = async (url: string) => (await fetchOk(url, "text/html,application/xml")).text();
+const isPdf = (url: string) => /\.pdf($|\?)/i.test(url);
 
 const turndown = new TurndownService({ headingStyle: "atx", bulletListMarker: "-", codeBlockStyle: "fenced", emDelimiter: "_" });
 turndown.use(tables);
@@ -53,7 +61,11 @@ function tidy(markdown: string): string {
   const lines = markdown.split("\n")
     .map(l => l.replace(/\s+$/, "").replace(/^(\s*)-\s{2,}/, "$1- "))
     .filter(l => !/^(Header Image|Share this page|Print|Social Media|Subscribe|Alerts|No events found\.?|-|\*)$/i.test(l.trim()));
-  let text = lines.join("\n").replace(/ /g, " ").replace(/\\_/g, "_") // turndown escapes underscores, which breaks emails.replace(/^#+\s*$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+  let text = lines.join("\n").replace(/ /g, " ")
+    .replace(/\\_/g, "_") // turndown escapes underscores, which breaks emails
+    .replace(/^#+\s*$/gm, "") // headings left empty once their icon was removed
+    .replace(/^<table.*<\/table>$/gm, "") // raw-HTML tables turndown couldn't convert (project timelines)
+    .replace(/\n{3,}/g, "\n\n").trim();
   if (Buffer.byteLength(text) > MAX_BYTES) {
     const cut = text.slice(0, MAX_BYTES);
     text = `${cut.slice(0, Math.max(cut.lastIndexOf("\n\n"), MAX_BYTES / 2))}\n\n_[Truncated: the full page is at the source URL.]_`;
@@ -64,6 +76,7 @@ function tidy(markdown: string): string {
 const frontmatter = (fields: Record<string, string>) => `---\n${Object.entries(fields).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join("\n")}\n---\n\n`;
 
 function slugFor(source: Source, used: Set<string>): string {
+  if (source.slug) { used.add(source.slug); return source.slug; }
   const parts = new URL(source.url).pathname.split("/").filter(Boolean);
   let slug = parts.at(-1) ?? source.topic;
   if (used.has(slug) && parts.length > 1) slug = `${parts.at(-2)}-${slug}`;
@@ -71,14 +84,40 @@ function slugFor(source: Source, used: Set<string>): string {
   return slug.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
 }
 
+// A code page is titled by its section ("Bellevue City Code 9.18 — …"); the city page's own heading is kept below it.
+// A source's "note" (e.g. "City flyer from 2016…") is shown under the title, so dated material reads as dated.
+function heading(source: Source, pageTitle: string): { title: string; subtitle: string } {
+  const note = source.note ? `_${source.note}_\n\n` : "";
+  if (source.topic !== "code") return { title: pageTitle || source.title, subtitle: note };
+  return { title: source.title, subtitle: (pageTitle && pageTitle !== source.title ? `_City page: ${pageTitle}_\n\n` : "") + note };
+}
+
 async function scrapePage(source: Source): Promise<string> {
   const $ = load(await get(source.url));
-  const title = $("h1").first().text().replace(/\s+/g, " ").trim() || source.title;
+  const { title, subtitle } = heading(source, $("h1").first().text().replace(/\s+/g, " ").trim());
   const main = mainContent($);
   main.find(JUNK).remove();
   main.find("h1").first().remove();
   const body = tidy(turndown.turndown(main.html() ?? ""));
-  return frontmatter({ title, source: source.url, fetched: today, topic: source.topic }) + `# ${title}\n\n${body}\n`;
+  return frontmatter({ title, source: source.url, fetched: today, topic: source.topic }) + `# ${title}\n\n${subtitle}${body}\n`;
+}
+
+// PDFs (city flyers and brochures): text lines are re-joined into paragraphs, bullets become list items.
+async function scrapePdf(source: Source): Promise<string> {
+  const data = new Uint8Array(await (await fetchOk(source.url, "application/pdf")).arrayBuffer());
+  const { text } = await extractText(await getDocumentProxy(data), { mergePages: true });
+  const blocks: string[] = [];
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\b[a-z]\d{3,5}[A-Z]?_\d{2}\.\d{2}_[a-z]+\b/g, "").replace(/\s+/g, " ").trim(); // drop print-shop codes
+    if (!line) continue;
+    const bullet = /^[•●▪◦]\s*/.test(line), last = blocks.length - 1;
+    const startsNew = bullet || last < 0 || /[.:!?)]$/.test(blocks[last]) || (line === line.toUpperCase() && /[A-Z]{4}/.test(line));
+    if (startsNew) blocks.push(bullet ? `- ${line.replace(/^[•●▪◦]\s*/, "")}` : line);
+    else blocks[last] += (/\d$/.test(blocks[last]) && line.startsWith("-") ? "" : " ") + line;
+  }
+  const { title, subtitle } = heading(source, "");
+  const body = tidy(blocks.map((b, i) => (b.startsWith("- ") ? b : `${i ? "\n" : ""}${b}\n`)).join("\n"));
+  return frontmatter({ title, source: source.url, fetched: today, topic: source.topic }) + `# ${title}\n\n${subtitle}${body}\n`;
 }
 
 // Events: the calendar page is client-rendered (FullCalendar); its RSS feed carries each event's fields as HTML.
@@ -105,12 +144,14 @@ async function scrapeEvents(source: Source): Promise<string> {
 async function main() {
   const out = path.join(dir, "pages");
   mkdirSync(out, { recursive: true });
+  // Slugs are assigned over the whole list, so a --topic run writes the same file names as a full run.
   const used = new Set<string>(), failed: string[] = [];
-  for (const [i, source] of sources.entries()) {
+  const planned = sources.map(source => ({ source, slug: source.feed ? "events" : slugFor(source, used) }))
+    .filter(({ source }) => !onlyTopic || source.topic === onlyTopic);
+  for (const [i, { source, slug }] of planned.entries()) {
     if (i) await sleep(1000); // polite: one request a second
-    const slug = source.feed ? "events" : slugFor(source, used);
     try {
-      const md = source.feed ? await scrapeEvents(source) : await scrapePage(source);
+      const md = source.feed ? await scrapeEvents(source) : isPdf(source.url) ? await scrapePdf(source) : await scrapePage(source);
       writeFileSync(path.join(out, `${slug}.md`), md);
       console.log(`${String(Buffer.byteLength(md)).padStart(6)} B  ${source.topic.padEnd(22)} ${slug}.md`);
     } catch (e) {

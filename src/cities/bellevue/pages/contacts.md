@@ -23,7 +23,6 @@ Reach Records by Phone: Monday - Friday, 8:00 a.m. - 5:00 p.m., except holidays.
 
 Fingerprinting appointments are available on Tuesdays and Thursdays. Visit our Police Services page to schedule an appointment.
 
-
 ## Key Contacts
 
 ### Main Station Officer
@@ -91,4 +90,3 @@ bpdrecords@bellevuewa.gov
 425-452-6917 (BPD Records)
 
 425-452-4452 (BPD Public Disclosure Requests)
-

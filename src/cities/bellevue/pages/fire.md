@@ -36,4 +36,3 @@ Fax Number
 Email
 
 FireInfo@bellevuewa.gov
-

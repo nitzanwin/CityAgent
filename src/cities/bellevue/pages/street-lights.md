@@ -13,7 +13,6 @@ In Bellevue, street lighting is either provided by the city or by Puget Sound En
 
 To report a burnt-out street light, please send us an email (signalshop@bellevuewa.gov) with the location and your contact information, in case we have questions. You can also submit your issue online.
 
-
 ## New Lights in Residential Areas
 
 You can request a new street light on a public street in your neighborhood. If the new light can be installed on an existing PSE utility pole, there is typically no cost to the resident. Installation requires the approval of all residents within 100 feet of the new street light. NOTE: New street light requests will be filled with LED street lights wherever possible.
@@ -31,4 +30,3 @@ Telephone
 Email
 
 trreception@bellevuewa.gov
-

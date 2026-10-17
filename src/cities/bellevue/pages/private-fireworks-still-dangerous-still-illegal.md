@@ -13,7 +13,6 @@ Avoid injuries and/or $1,000 fines. Head over to the Bellevue Family 4th for a g
 
 Setting off your own fireworks in Bellevue is illegal, and police officers and firefighters will conduct fireworks emphasis patrols throughout the city on July 4. On that night residents can use a new "report fireworks" category in the MyBellevue app or web portal to easily report illegal fireworks in their neighborhood.
 
-
 In the video above, Bellevue Fire Marshal Ken Carlson discusses the dangers of illegal fireworks, the penalties, the new way to report them and "Respect the Ban" signs you can post on your lawn.
 
 Fireworks, when used incorrectly, can cause great harm to us, our pets and our communities, so outside of permitted displays such as the Family 4th, the use of fireworks has been illegal in Bellevue since 1994, with fines of up to $1,000 for violations.

@@ -23,7 +23,6 @@ Report a Cart
 
     Carts Retrieved: - 1185
 
-
 ## FAQs
 
 ### How do I report an abandoned, unoccupied shopping cart?
