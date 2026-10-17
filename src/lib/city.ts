@@ -6,4 +6,4 @@ export type Department = { id: DepartmentId; name: string; covers: string; mockP
 const { config } = cityPack();
 export const city = config;
 export const departments: Department[] = config.departments;
-export const departmentName = (id: DepartmentId) => departments.find(d => d.id === id)?.name ?? "General Services";
+export const departmentName = (id: DepartmentId) => departments.find(d => d.id === id)?.name ?? departments.find(d => d.id === "general")!.name;

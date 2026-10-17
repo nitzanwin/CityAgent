@@ -23,7 +23,7 @@ export function textOf(content: unknown): string {
 
 // Safety net: whatever the branch, never read a link aloud.
 export const withoutUrls = (text: string) => text.replace(/\b(?:https?:\/\/|www\.)\S+|\b[\w-]+(?:\.[\w-]+)*\.(?:gov|com|org|net|codes)\b\S*/gi, "the city's website");
-const departmentName = (id: DepartmentId) => departments.find(d => d.id === id)?.name ?? "General Services";
+const departmentName = (id: DepartmentId) => departments.find(d => d.id === id)?.name ?? departments.find(d => d.id === "general")!.name;
 const spokenReference = (id: string) => id.replace(/[^a-z0-9]/gi, "").slice(-6).toUpperCase().split("").join(" ");
 
 export async function replyFor(messages: ChatMessage[], now: Date, ticket: CreateTicket = createTicket): Promise<string> {

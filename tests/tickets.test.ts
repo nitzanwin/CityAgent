@@ -15,7 +15,7 @@ test('known issues are seeded as CD-1001 onwards, and "open" leaves out fixed on
 
 test('a new ticket gets the next reference and can be found however the caller says it', async () => {
   const tickets = memory();
-  const t = await tickets.create({ department: 'public-works', title: 'Pothole', issue: 'Deep pothole', location: '200th Ave and 3rd St', reporter: { name: 'Dana', phone: '+1 (425) 555-0123' } });
+  const t = await tickets.create({ department: 'transportation', title: 'Pothole', issue: 'Deep pothole', location: '200th Ave and 3rd St', reporter: { name: 'Dana', phone: '+1 (425) 555-0123' } });
   assert.equal(t.reference, 'CD-1006');
   assert.equal(t.status, 'reported');
   for (const spoken of ['CD-1006', 'cd 1006', 'C D 1 0 0 6', '1006']) assert.equal((await tickets.get(spoken))?.title, 'Pothole', spoken);
@@ -42,7 +42,7 @@ test('the Trello adapter maps lists to statuses, comments to updates, and idShor
   const requests: { method: string; url: URL }[] = [];
   const board = {
     lists: [{ id: 'L1', name: 'Reported' }, { id: 'L2', name: 'In progress' }, { id: 'L3', name: 'Scheduled' }, { id: 'L4', name: 'Fixed' }],
-    cards: [{ id: 'C1', name: 'Streetlight out', idList: 'L2', idShort: 2, shortUrl: 'https://trello.com/c/x', desc: formatDesc({ department: 'public-works', location: 'Bellevue Way', reportedOn: '2026-10-15', reporter: {}, followers: [], issue: 'Dark block.' }) }],
+    cards: [{ id: 'C1', name: 'Streetlight out', idList: 'L2', idShort: 2, shortUrl: 'https://trello.com/c/x', desc: formatDesc({ department: 'transportation', location: 'Bellevue Way', reportedOn: '2026-10-15', reporter: {}, followers: [], issue: 'Dark block.' }) }],
     actions: [{ date: '2026-10-16T10:00:00Z', data: { text: 'Part ordered.', card: { id: 'C1' } } }, { date: '2026-10-15T10:00:00Z', data: { text: 'Assigned.', card: { id: 'C1' } } }],
   };
   const http = (async (url: URL, init?: RequestInit) => {

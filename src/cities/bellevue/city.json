@@ -12,10 +12,16 @@
     { "label": "Municipal code", "url": "https://bellevue.municipal.codes/" },
     { "label": "City calendar", "url": "https://bellevuewa.gov/calendar" }
   ],
+  "_departments": "Bellevue's real departments and what they handle, from MyBellevue 311 data (34,576 requests, Jun 2021 – Oct 2026). Phone numbers are mock.",
   "departments": [
-    { "id": "public-works", "name": "Public Works", "covers": "roads, potholes, sidewalks, streetlights, traffic signals, water, sewer and storm drains", "mockPhone": "+1-555-0101", "keywords": ["pothole", "hole", "road", "street", "streetlight", "light", "signal", "water", "sewer", "traffic", "sidewalk", "drain"] },
-    { "id": "parks", "name": "Parks & Recreation", "covers": "parks, playgrounds, trails, park trees and recreation programs", "mockPhone": "+1-555-0102", "keywords": ["park", "playground", "trail", "recreation", "tree", "swing"] },
-    { "id": "code-compliance", "name": "Code Compliance", "covers": "noise, zoning, construction without permits and property code violations", "mockPhone": "+1-555-0103", "keywords": ["noise", "zoning", "permit", "violation", "construction", "code"] },
-    { "id": "general", "name": "General Services", "covers": "anything that doesn't fit another department", "mockPhone": "+1-555-0104", "keywords": [] }
+    { "id": "transportation", "name": "Transportation", "covers": "potholes and street repairs, traffic signals, streetlights, sidewalks, road debris, overgrown vegetation along roads, street signs, traffic concerns, and scooters or bikes parked in the way", "mockPhone": "+1-555-0101", "keywords": ["pothole", "hole", "road", "street", "streetlight", "light", "signal", "sidewalk", "sign", "debris", "traffic", "scooter", "bike", "lime"] },
+    { "id": "utilities", "name": "Utilities", "covers": "water leaks, water quality, drainage and flooding, sewer problems, spills and pollution, garbage and recycling, and utility bills", "mockPhone": "+1-555-0102", "keywords": ["water", "water main", "leak", "leaking", "flood", "flooding", "drain", "drainage", "sewer", "spill", "pollution", "garbage", "recycling", "bill"] },
+    { "id": "police", "name": "Police Department", "covers": "non-emergency police matters: parking enforcement, abandoned vehicles, traffic enforcement requests and contacting your police sector captain", "mockPhone": "+1-555-0103", "keywords": ["parking", "parked", "abandoned", "vehicle", "car", "speeding"] },
+    { "id": "development-services", "name": "Development Services", "covers": "code violations such as property upkeep, construction without permits, zoning and construction noise, graffiti, and landmark tree removal", "mockPhone": "+1-555-0104", "keywords": ["code", "violation", "permit", "zoning", "construction", "noise", "graffiti", "tag", "tagging"] },
+    { "id": "community-development", "name": "Community Development", "covers": "abandoned shopping carts and help resolving conflicts with neighbors", "mockPhone": "+1-555-0105", "keywords": ["shopping cart", "cart", "neighbor", "neighbour", "conflict", "dispute"] },
+    { "id": "parks", "name": "Parks & Community Services", "covers": "parks, trails, park trees, playground equipment, trash in parks, pet waste and dogs off leash", "mockPhone": "+1-555-0106", "keywords": ["park", "playground", "trail", "tree", "swing", "dog", "leash", "pet"] },
+    { "id": "city-managers-office", "name": "City Manager's Office", "covers": "homelessness assistance and outreach, including encampments", "mockPhone": "+1-555-0107", "keywords": ["homeless", "homelessness", "encampment", "tent", "tents"] },
+    { "id": "fire", "name": "Fire Department", "covers": "non-emergency fire matters: fireworks reports, dry vegetation fire hazards, fire station tours and community event requests", "mockPhone": "+1-555-0108", "keywords": ["firework", "fireworks", "tour", "dry grass"] },
+    { "id": "general", "name": "City Hall Customer Service", "covers": "general questions and anything that doesn't fit another department", "mockPhone": "+1-555-0109", "keywords": [] }
   ]
 }

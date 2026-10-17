@@ -1,21 +1,26 @@
 [
   {
     "title": "Large pothole in the right lane",
-    "department": "public-works",
+    "department": "transportation",
     "issue": "Large pothole in the right lane, deep enough to damage tires.",
     "location": "NE 8th St at 112th Ave NE",
     "status": "scheduled",
     "reportedOn": "2026-10-13",
-    "updates": ["Oct 14: Inspected by a road crew.", "Oct 15: Repair scheduled for Tuesday, October 20."]
+    "updates": [
+      "Oct 14: Inspected by a road crew.",
+      "Oct 15: Repair scheduled for Tuesday, October 20."
+    ]
   },
   {
     "title": "Streetlight out",
-    "department": "public-works",
+    "department": "transportation",
     "issue": "Streetlight is out, the block is very dark at night.",
     "location": "Bellevue Way NE near NE 4th St",
     "status": "in-progress",
     "reportedOn": "2026-10-15",
-    "updates": ["Oct 16: Electrician assigned; replacement part ordered."]
+    "updates": [
+      "Oct 16: Electrician assigned; replacement part ordered."
+    ]
   },
   {
     "title": "Broken swing at the playground",
@@ -28,12 +33,15 @@
   },
   {
     "title": "Construction noise after hours",
-    "department": "code-compliance",
+    "department": "development-services",
     "issue": "Construction site running loud equipment after 8 PM.",
     "location": "108th Ave NE and NE 10th St",
     "status": "in-progress",
     "reportedOn": "2026-10-12",
-    "updates": ["Oct 14: Inspector visited the site and issued a warning.", "Oct 16: Follow-up inspection planned for next week."]
+    "updates": [
+      "Oct 14: Inspector visited the site and issued a warning.",
+      "Oct 16: Follow-up inspection planned for next week."
+    ]
   },
   {
     "title": "Fallen branch across the trail",
@@ -42,6 +50,8 @@
     "location": "Lake Hills Greenbelt trail",
     "status": "fixed",
     "reportedOn": "2026-10-09",
-    "updates": ["Oct 10: Crew removed the branch; trail is clear."]
+    "updates": [
+      "Oct 10: Crew removed the branch; trail is clear."
+    ]
   }
 ]

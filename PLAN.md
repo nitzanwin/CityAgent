@@ -269,7 +269,7 @@ What the transcript also showed:
 - Confirmed: Vapi sends the whole conversation every turn (the "yes" follow-up
   worked).
 
-### Flow v2 (draft)
+### Flow v2 (live)
 
 Each turn reads the whole conversation, not just the last sentence.
 
@@ -280,8 +280,8 @@ Each turn reads the whole conversation, not just the last sentence.
    they'll hear back.
 3. **A question or a new issue?** (yes/no) — a question is answered from city
    knowledge or pointed to the website.
-4. **Which department** — name it and what it covers: "That's Public Works —
-   they handle roads, potholes and sidewalks."
+4. **Which department** — name it and what it covers: "That's
+   Transportation — they handle potholes, streetlights and traffic signals."
 5. **Already known?** (yes/no against open tickets: "is this the same problem
    as ticket X?") — if so, say so, give its status, and offer to add the
    caller so they're updated too, instead of opening a duplicate.
@@ -303,6 +303,145 @@ Each turn reads the whole conversation, not just the last sentence.
   It lives behind the ticketing integration (principle 2), so the agent can
   create, find, look up and follow tickets in whichever system the city uses.
 
+## Research: what residents actually ask (2026-10-17)
+
+There is no public source of real city call transcripts: cities don't publish
+recordings, for privacy. Getting real calls would take a public-records request
+to a specific city. Three public datasets cover what we need instead:
+
+| Source | What it gives | Size | What we use it for |
+|---|---|---|---|
+| [Bellevue MyBellevue 311](https://services1.arcgis.com/EYzEZbDhXZjURPbP/arcgis/rest/services/MyBellevue_311/FeatureServer/0) | Request type, handling department, status, date | 34,576 requests, Jun 2021 – Oct 2026 | What Bellevue residents ask for most, and which department handles each (routing ground truth) |
+| [NYC 311 Call Center Inquiry](https://catalog.data.gov/dataset/311-call-center-inquiry) | The topic of every agent-handled call to NYC's 311 line | Hundreds of thousands of calls | What people *phone* about |
+| [SeeClickFix public API](https://seeclickfix.com/api/v2/issues) | Residents' own free-text descriptions | ~8,300 in New Haven; some in the Bellevue / Mercer Island area | Realistic caller wording |
+
+### What the data says
+
+**Bellevue's most common requests** — and how far our first guess was from them:
+
+| Requests | Type | Department that handled it |
+|---|---|---|
+| 6,957 | Abandoned shopping cart (about 1 in 5) | Community Development |
+| 4,774 | Code violations | Development Services |
+| 3,595 | Parking / abandoned vehicle | Police Department |
+| 2,257 | Homelessness assistance and outreach | City Manager's Office |
+| 1,812 | Park issues | Parks & Community Services |
+| 1,663 | Graffiti | Development Services (Transportation, Utilities on their equipment) |
+| 1,354 | Traffic concerns | Transportation; Police for enforcement |
+| 1,160 | Fireworks | Fire Department |
+| 314 | Potholes (about 1%) | Transportation |
+
+By department: Community Development 6,837 · Transportation 6,078 · Police
+6,076 · Development Services 5,107 · Parks & Community Services 4,577 · City
+Manager's Office 2,240 · Fire 1,488 · Utilities 1,411. Almost all requests
+(33,955) end up `completed`.
+
+**What people phone NYC's 311 line about** (agent-handled calls since August
+2026): apartment maintenance in rental buildings (18,801), **checking the status
+of a service request (17,138, #2)**, complaints or compliments about city
+agencies (15,580), towed vehicles (14,847), parking and camera tickets (12,687),
+noisy neighbours (12,684), illegal parking (10,261). Status checks being #2
+confirms the "discuss my existing ticket" feedback.
+
+**How residents word things** (SeeClickFix): "dumped supermarket carts by the
+side of Geronimos around 246 Crown" · "Issue was closed, but unwanted items still
+sitting there for over a week" · "Asking again to replace the left turn signal
+on the northbound side". Short, specific about place, and often a follow-up on
+an earlier report.
+
+### What changed because of it
+
+Our first departments (Public Works, Parks, Code Compliance, General Services)
+were invented, and most of Bellevue's real top requests would have landed in
+"General Services". The city pack now uses Bellevue's real departments and what
+each handles according to the data (`src/cities/bellevue/city.json`), the
+knowledge file lists the top ten requests and who handles them, and the seeded
+tickets and the Trello board were remapped.
+
+### Also looked at
+
+- [CitizenQuery-UK](https://arxiv.org/abs/2602.04064) (arXiv, Feb 2026): about
+  22,000 synthetic citizen questions and answers built from gov.uk, scored for
+  factuality, abstention and verbosity. National UK services, and the paper
+  doesn't link a dataset release; useful for its scoring approach.
+- [Public-sector Chatbot Performance framework](https://research.vu.nl/en/publications/benchmarking-municipal-ai-chatbot-performance-mixed-methods-insig/)
+  (VU Amsterdam, 2025): 26 prompts, 326 interactions with Dutch municipal
+  chatbots. A rubric to borrow from, not data.
+- Other cities' 311 data: [New Orleans calls](https://catalog.data.gov/dataset/311-calls-historic-data-2012-2018),
+  [NYC service requests](https://catalog.data.gov/dataset/311-service-requests-from-2010-to-present),
+  [Baton Rouge](https://catalog.data.gov/dataset/311-citizen-requests-for-service),
+  [Washington DC](https://catalog.data.gov/dataset/311-city-service-requests-in-2023),
+  [Montreal](https://donnees.iriu.ca/en/dataset/5866f832-676d-4b07-be6a-e99c21eb17e4).
+- Background on the Bellevue data: [open data portal launch](https://bellevuewa.gov/city-news/bellevue-launches-open-data-portal),
+  [MyBellevue app](https://bellevuewa.gov/city-news/mybellevue-app-gets-new-look),
+  [ArcGIS item](https://www.arcgis.com/home/item.html?id=d36d5a23bd414aa08b2fc286de542655).
+
+**Terms:** Bellevue's data may not be used commercially or sold without the
+city's written permission, and isn't guaranteed accurate — fine for evaluating
+a demo, not for shipping in a product. NYC open data is free to use.
+SeeClickFix was only sampled lightly; check its API terms before pulling in
+bulk.
+
+## Evaluation plan (v1 — not built yet)
+
+**Goal:** measure whether CityDesk handles the calls a real city gets, the way
+the call flow says it should, and catch regressions when the prompt or models
+change.
+
+Four layers, cheapest first:
+
+1. **Routing coverage** (no conversation). Bellevue's top ~25 request types and
+   the department that handled each are the ground truth. One plain caller
+   sentence per type ("There's an abandoned shopping cart outside my
+   building"); check the department the agent names in its first reply.
+   Accuracy is weighted by request volume, so carts count twenty times more than
+   potholes. (The keyword fallback already has a unit test for the top seven.)
+2. **Real wording, first turn.** About 100 SeeClickFix descriptions, Bellevue
+   area first, each labelled with a Bellevue department through its category.
+   Each is the caller's first sentence; the reply must name the right
+   department and what it covers, ask one question for what's missing (usually
+   the exact place), invent nothing, read out no URL, and stay within two
+   sentences.
+3. **Phone-specific asks.** The NYC info-line topics that apply to any city:
+   checking a ticket's status, towed cars, bulky items, noisy neighbours,
+   parking tickets, complaints about city staff. Expected: look it up, route
+   it, or say honestly that the city's website has it — never make it up.
+4. **Full conversations.** The simulated-caller harness already used for
+   testing (a model plays the resident with a goal and talks to the real
+   endpoint turn by turn), seeded from 1–3 plus the flows from our feedback:
+   new issue while closed, known issue (join, don't duplicate), calling back by
+   caller ID and by reference, emergency, urgent but not dangerous, a caller who
+   changes their mind, a caller who pauses mid-sentence.
+
+Scoring for the full conversations, built from the feedback:
+
+| Check | How it's measured |
+|---|---|
+| Names the department and what it covers | Judge |
+| When closed: says when they reopen, the urgent line, 911 | Judge |
+| Collects what / where / name / number, one at a time | Judge + tool arguments |
+| Reads back and gets a yes before creating | Order of tool calls in the turn logs |
+| Gives the reference, who follows up, and when | Transcript match + judge |
+| No duplicate when the issue is already known | Ticket store state |
+| The ticket matches what the caller said | Ticket store vs scenario |
+| Nothing invented | Judge, with the city knowledge as reference |
+| First words within 1.5 s; 95% of turns within 3 s | Turn logs |
+
+**How it runs:**
+
+- Against the in-memory ticket store with fresh seeds per scenario, so runs are
+  repeatable and don't fill the Trello board; one smoke run against Trello.
+- The judge is a different model from the agent, and logs a reason for every
+  check, so a failure can be read rather than guessed at.
+- Output: a pass rate per check and the failing transcripts, saved per run so a
+  prompt or model change can be compared with the last run.
+- Size for v1: ~25 routing cases, ~100 first turns, ~15 phone asks and ~20 full
+  conversations — minutes and a few dollars per run.
+
+**Not in v1:** real audio. The harness sends text to the brain endpoint, so
+speech-recognition errors, interruptions and pauses aren't covered. A later
+version could play generated speech into a Vapi web call.
+
 ## Where things stand
 
 | Area | Now | Where this plan takes it |
@@ -310,7 +449,8 @@ Each turn reads the whole conversation, not just the last sentence.
 | Voice | ✓ Vapi: phone number + voice-only call screen (`src/app/page.tsx`) | Real call transfers |
 | Ticketing | ✓ One interface (`src/lib/tickets/types.ts`); Trello and in-memory adapters | More adapters (Jira, Monday, GitHub Issues) |
 | Understanding | ✓ Rules → yes/no gates (`gates.ts`) → deep model (`agent.ts`), raced in `brain.ts`; keyword rules as fallback | More gates as the task's routes need them |
-| City knowledge | ✓ City pack in `src/cities/bellevue/` (config, `knowledge.md`, known issues) | A second city to prove the swap |
+| City knowledge | ✓ City pack in `src/cities/bellevue/` (config, `knowledge.md`, known issues), with Bellevue's real departments from its 311 data | A second city to prove the swap |
+| Evaluation | Simulated-caller harness used for manual testing | The v1 eval above |
 | Tools | ✓ Find known issue, look up, create, follow, transfer (simulated) | Real transfers |
 | Model provider | ✓ Only `src/lib/llm.ts` knows it; OpenAI or any OpenAI-compatible endpoint by config | — |
 

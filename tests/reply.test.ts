@@ -26,7 +26,7 @@ test('yes after the offer creates a ticket for the original issue', async () => 
   const calls: TicketInput[] = [];
   const reply = await afterOffer('Yes please', async input => { calls.push(input); return { id: 'demo-abc123', provider: 'mock' }; });
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].department, 'public-works');
+  assert.equal(calls[0].department, 'transportation');
   assert.equal(calls[0].description, ISSUE);
   assert.match(reply, /reference ends in A B C 1 2 3/);
 });
@@ -44,7 +44,7 @@ test('a failed ticket is not reported as filed', async () => {
 });
 
 test('during office hours the caller hears which department they would reach', async () => {
-  assert.match(await replyFor([user('Report a pothole')], OPEN), /transfer you to Public Works/);
+  assert.match(await replyFor([user('Report a pothole')], OPEN), /transfer you to Transportation/);
 });
 
 test('replies never read a URL aloud', async () => {
@@ -58,5 +58,5 @@ test('missing or empty caller message asks them to repeat', async () => {
 });
 
 test('array content parts are read as text', async () => {
-  assert.match(await replyFor([user([{ type: 'text', text: 'Report a pothole' }])], OPEN), /Public Works/);
+  assert.match(await replyFor([user([{ type: 'text', text: 'Report a pothole' }])], OPEN), /Transportation/);
 });
