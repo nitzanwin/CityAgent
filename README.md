@@ -31,8 +31,10 @@ Copy `.env.example` to `.env.local`. On Vercel the same variables live in Projec
 | `VAPI_LLM_SECRET` | Shared secret Vapi sends with every turn; the brain endpoint rejects requests without it |
 | `NEXT_PUBLIC_VAPI_PUBLIC_KEY` | Browser-safe Vapi key for the call screen |
 | `NEXT_PUBLIC_VAPI_ASSISTANT_ID` | The Vapi assistant the call button dials |
-| `OPENAI_API_KEY` | Model provider key (not used yet) |
-| `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_LIST_ID` | Optional; without all three, **ticket creation is mock-only** |
+| `OPENAI_API_KEY` | Model provider key; without it, replies fall back to the rule-based routing |
+| `LLM_GATE_MODEL`, `LLM_AGENT_MODEL` | Optional model overrides (defaults `gpt-4.1-nano` for yes/no gates, `gpt-4.1-mini` for the conversation) |
+| `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_BOARD_ID` | Optional; Trello as the ticketing system. `npm run setup:trello` creates the board and prints the ID. Without all three, tickets live in memory and are **not persistent** |
+| `CITY` | Optional; which city pack in `src/cities` to use (default `bellevue`) |
 
 No real transfers occur yet.
 
@@ -44,12 +46,17 @@ No real transfers occur yet.
 
 ## Architecture
 
-- `src/lib/city.ts`: department data and city configuration
-- `src/lib/routing.ts`: explicit routing and schedule decision engine
-- `src/lib/tickets.ts`: ticket integration boundary
-- `src/app/api/agent/route.ts`: validated API and ticket orchestration
-- `src/app/api/vapi/chat/completions/route.ts`: the brain Vapi calls every turn (OpenAI-compatible, secret-protected)
-- `src/lib/reply.ts`: turns routing decisions into spoken replies, including the yes/no ticket follow-up
+- `src/cities/<id>/`: a city pack — `city.json` (departments, hours, urgent line), `knowledge.md` (what callers can be told), `known-issues.json` (seed tickets)
+- `src/lib/city.ts`: the active city's config
+- `src/lib/routing.ts`: explicit routing and schedule rules (open now, next opening)
+- `src/lib/tickets/`: the ticketing contract (`types.ts`) and its integrations: in-memory and Trello
+- `src/lib/llm.ts`: the only file that knows the model provider
+- `src/lib/gates.ts`: yes/no gates — one-token answers with a confidence, run before the deep model
+- `src/lib/agent.ts`: the deep model — system prompt, tools (known issues, ticket lookup/creation/follow, transfer), tool loop
+- `src/lib/brain.ts`: one caller turn — gates and deep model race; a confident gate wins, the rule-based reply is the fallback
+- `src/app/api/vapi/chat/completions/route.ts`: the endpoint Vapi calls every turn (OpenAI-compatible, streamed, secret-protected)
+- `src/lib/reply.ts`: the rule-based fallback reply
+- `src/app/api/agent/route.ts`: the starter's original JSON API
 - `src/app/page.tsx`: voice-only call screen (start, mute, end)
 - `tests/routing.test.ts`: decision unit tests
 

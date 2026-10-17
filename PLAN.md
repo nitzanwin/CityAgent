@@ -236,6 +236,66 @@ call, working on the internet, not a local demo.
 A real call working end to end early means everything after it is
 improvement, not risk.
 
+## Call flow
+
+### Feedback from the first test call (2026-10-17)
+
+- Every question got "the department is closed — open a ticket?", even a
+  question about the ticket I had just opened.
+- It never named the department or explained what happens next: whose
+  jurisdiction this is, that they're closed, that a ticket gets a reply when
+  they're back, and where to go if it's urgent.
+- It opened the ticket without asking for any details.
+- It never told me they'd contact me when it's fixed, or whether the problem
+  was already known and being worked on.
+- I want memory: what's already been reported, what's in progress, what's been
+  looked into — and the ability to discuss an existing ticket.
+- More feedback looped back to me, the caller, at every step.
+
+What the transcript also showed:
+
+- The brain reads only the caller's last sentence. A pause split "a hole in my
+  street" across two turns, so it heard only "a hole at 200 and 3" and routed
+  it to General Services.
+- Keywords are too brittle ("hole" doesn't match "pothole").
+- The ticket reference was read out as "0 b a 2 0 0".
+- Confirmed: Vapi sends the whole conversation every turn (the "yes" follow-up
+  worked).
+
+### Flow v2 (draft)
+
+Each turn reads the whole conversation, not just the last sentence.
+
+1. **Urgent?** (yes/no) — danger to life → call 911 now. Urgent but not
+   life-threatening → the city's urgent line (from the city's config).
+2. **About an existing ticket?** (yes/no) — find it by the caller's number or
+   the ticket reference, then say its status, what's been done, and when
+   they'll hear back.
+3. **A question or a new issue?** (yes/no) — a question is answered from city
+   knowledge or pointed to the website.
+4. **Which department** — name it and what it covers: "That's Public Works —
+   they handle roads, potholes and sidewalks."
+5. **Already known?** (yes/no against open tickets: "is this the same problem
+   as ticket X?") — if so, say so, give its status, and offer to add the
+   caller so they're updated too, instead of opening a duplicate.
+6. **Open or closed** (rule) — open: transfer. Closed: "They're closed now and
+   back Monday at 8 AM. I can open a ticket and they'll contact you when
+   they're back. If it's urgent, …"
+7. **Collect details, one question at a time** — what's wrong, where exactly,
+   name and callback number (on the phone line, confirm the caller-ID number).
+8. **Read it back and confirm** (yes/no).
+9. **Open the ticket and close the loop** — a short reference ("CD-1042"),
+   who will contact them, when, and how.
+
+### What it needs
+
+- **The model step now.** Telling questions from issues, spotting a known
+  problem and pulling out a location are beyond keywords: yes/no checks plus
+  small extraction calls.
+- **A ticket store with statuses that persists between calls** — the memory.
+  It lives behind the ticketing integration (principle 2), so the agent can
+  create, find, look up and follow tickets in whichever system the city uses.
+
 ## Where things stand
 
 | Area | Now | Where this plan takes it |

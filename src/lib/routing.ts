@@ -42,3 +42,18 @@ export function decide(message: string, now: Date, holidays: ReadonlySet<string>
   }
   return { action: "ticket", department: dept.id, title: input.slice(0, 80), response: `${dept.name} is closed under the demo schedule. I can create a service ticket instead.` };
 }
+
+// When offices next open, searched hour by hour up to 8 days ahead (hours are whole-hour, demo policy).
+export function nextOpening(now: Date, holidays: ReadonlySet<string> = new Set()): Date | null {
+  const hour = 3_600_000, start = Math.floor(now.getTime() / hour) * hour;
+  for (let h = 1; h <= 24 * 8; h++) if (isOfficeOpen(new Date(start + h * hour), holidays)) return new Date(start + h * hour);
+  return null;
+}
+
+// "today at 8 AM", "tomorrow at 8 AM", "on Monday at 8 AM" — in the city's timezone.
+export function spokenWhen(date: Date, now: Date): string {
+  const fmt = (d: Date, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("en-US", { timeZone: city.timezone, ...options }).format(d);
+  const dayOf = (d: Date) => fmt(d, { year: "numeric", month: "2-digit", day: "2-digit" });
+  const day = dayOf(date) === dayOf(now) ? "today" : dayOf(date) === dayOf(new Date(now.getTime() + 86_400_000)) ? "tomorrow" : `on ${fmt(date, { weekday: "long" })}`;
+  return `${day} at ${fmt(date, { hour: "numeric", minute: "2-digit" }).replace(":00", "")}`;
+}
