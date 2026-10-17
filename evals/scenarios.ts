@@ -40,7 +40,7 @@ export const scenarios: Scenario[] = [
     expect: { says: [AM(8), PM(6)], ticket: false } },
   { id: "code-fireworks", requirement: "1 · code & website", title: "Are fireworks legal?", at: SAT,
     turns: ["Can I set off fireworks in my backyard for New Year's?"],
-    expect: { says: [/illegal|not (allowed|legal|permitted)|banned|prohibited/i], judge: "Says personal fireworks are not allowed in Bellevue, without inventing details." } },
+    expect: { says: [/illegal|not (allowed|legal|permitted)|banned|prohibited/i], judge: "Says personal fireworks are not allowed in Bellevue. Penalties or dates quoted from the city's pages (shown in the tool results) are fine; anything not supported by them is not." } },
   { id: "code-dogs-leash", requirement: "1 · code & website", title: "Leash rule in parks", at: SAT,
     turns: ["Do dogs have to be on a leash in Bellevue parks?"],
     expect: { says: [/leash/i], judge: "Says dogs must be on a leash in parks (mentioning off-leash areas is fine), without inventing rules." } },

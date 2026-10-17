@@ -84,7 +84,7 @@ function outcomes(turns: Turn[]) {
 
 async function judge(scenario: Scenario, turns: Turn[], rubric: string): Promise<Check> {
   const transcript = turns.map(t => `Caller: ${t.caller}\nAgent: ${t.reply}`).join("\n");
-  const tools = turns.flatMap(t => t.trace?.tools ?? []).map(c => `- ${c.name}(${JSON.stringify(c.args ?? {})}) → ${JSON.stringify(c.result ?? {}).slice(0, 4000)}`).join("\n") || "(none)";
+  const tools = turns.flatMap(t => t.trace?.tools ?? []).map(c => `- ${c.name}(${JSON.stringify(c.args ?? {})}) → ${JSON.stringify(c.result ?? {}).slice(0, 8000)}`).join("\n") || "(none)";
   const raw = await openai({ model: JUDGE_MODEL, temperature: 0, response_format: { type: "json_object" }, messages: [
     { role: "system", content: "You grade a call to a city's AI phone receptionist against a rubric. Reply with JSON: {\"pass\": true|false, \"reason\": \"one sentence\"}. Pass only if the rubric is fully met; judge substance, not wording. Facts that appear in the agent's tool results (shown below) or in the city's published information are not invented; only count something as invented if nothing supports it." },
     { role: "user", content: `Simulated time: ${scenario.at} (Bellevue). Rubric: ${rubric}\n\nTranscript:\n${transcript}\n\nTool calls:\n${tools}` },
