@@ -26,6 +26,7 @@ _CityDesk is a demo, not an official City of Bellevue service. Facts below come 
 
 - Abandoned shopping carts: usually collected within 4 to 5 days, sometimes up to 14. A cart someone is using or living out of is a homelessness outreach request, not a cart pickup.
 - Construction noise is allowed 7 AM to 8 PM Monday to Friday and 8 AM to 6 PM on Saturdays; none on Sundays or legal holidays. Outside those hours it's a code violation for Development Services.
+- A vehicle left parked on a street for a long time, or abandoned: city code (BCC 11.23.020) doesn't allow parking in the same place on a public street for more than 24 hours; the car has to move to a different block. The Police Department handles parking enforcement and abandoned vehicles (non-emergency 425-577-5656, or MyBellevue's "Parking Enforcement/Abandoned Vehicle" request).
 - Private fireworks are illegal in Bellevue; report them to the Fire Department or through MyBellevue.
 - Missed garbage, recycling or yard debris pickup: Republic Services, 425-452-4762 (residential) or 425-646-2492 (commercial and multifamily).
 - Neighbor disputes: the Conflict Resolution Center, 425-452-4091, free for people who live or work in Bellevue.
@@ -56,6 +57,6 @@ From 34,576 MyBellevue requests (June 2021 to October 2026), most common first: 
 
 ## Common questions
 
-- **Events:** search the city's calendar snapshot (search_city_info) and say it's as of its date; the live calendar is on the city's website.
+- **Events:** the city's calendar is read live (upcoming_events); give dates, times and places.
 - **Laws and rules** (noise, parking, permits): the Bellevue Municipal Code on the city's website is the official source. CityDesk can't confirm a specific rule over the phone beyond what's written here.
 - **Anything else:** search the city's website snapshot first, then the city's website or a ticket to City Hall Customer Service.

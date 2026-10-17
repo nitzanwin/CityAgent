@@ -1,7 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { think } from "@/lib/brain";
+import { think, type Trace } from "@/lib/brain";
+import { fixtureCityRequests, fixtureEvents, testClock, testTickets } from "@/lib/test-mode";
 import { withoutUrls } from "@/lib/reply";
 
 export const runtime = "nodejs";
@@ -43,13 +44,19 @@ export async function POST(request: Request) {
   const { messages, stream } = parsed.data;
   const callerNumber = parsed.data.call?.customer?.number ?? parsed.data.customer?.number;
   const id = `chatcmpl-${crypto.randomUUID()}`, created = Math.floor(Date.now() / 1000), model = parsed.data.model ?? "cityagent";
-  const think_ = (say: (text: string) => void) => think(messages, { now: new Date(), callerNumber, say }).catch(() => FAILED);
+  // Test mode (evals only; the secret is already required): simulated clock, isolated tickets, fixed 311 data, trace.
+  const test = request.headers.get("x-cityagent-test");
+  const now = (test && testClock(request.headers.get("x-cityagent-now"))) || new Date();
+  const testContext = test ? { tickets: await testTickets(test), cityRequests: fixtureCityRequests, events: fixtureEvents } : {};
+  let trace: Trace | undefined;
+  const think_ = (say: (text: string) => void) =>
+    think(messages, { now, callerNumber, say, ...testContext, ...(test && { trace: (t: Trace) => { trace = t; } }) }).catch(() => FAILED);
 
   if (!stream) {
     const parts: string[] = [];
     parts.push(await think_(text => parts.push(text)));
     const content = withoutUrls(parts.join(" "));
-    return NextResponse.json({ id, object: "chat.completion", created, model, choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: "stop" }] });
+    return NextResponse.json({ id, object: "chat.completion", created, model, choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: "stop" }], ...(trace && { cityagent: trace }) });
   }
 
   // Streamed: a lead-in ("Let me check that.") goes out as soon as the agent reaches for a tool, the answer follows.

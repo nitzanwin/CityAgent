@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:og="http://ogp.me/ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:schema="http://schema.org/" xmlns:sioc="http://rdfs.org/sioc/ns#" xmlns:sioct="http://rdfs.org/sioc/types#" xmlns:skos="http://www.w3.org/2004/02/skos/core#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" version="2.0" xml:base="https://bellevuewa.gov/">
+  <channel>
+    <title>City Events</title>
+    <link>https://bellevuewa.gov/</link>
+    <description/>
+    <language>en</language>
+    
+    <item>
+  <title>City Council Regular Meeting</title>
+  <link>https://bellevuewa.gov/events/city-council-regular-meeting-37</link>
+  <description>&lt;span class="field field--name-title field--type-string field--label-hidden"&gt;City Council Regular Meeting&lt;/span&gt;
+&lt;span class="field field--name-uid field--type-entity-reference field--label-hidden"&gt;&lt;span lang about="https://bellevuewa.gov/users/kmmiller" typeof="schema:Person" property="schema:name" datatype&gt;KMMiller&lt;/span&gt;&lt;/span&gt;
+&lt;span class="field field--name-created field--type-created field--label-hidden"&gt;&lt;time datetime="2025-12-11T11:57:26-08:00" title="Thursday, December 11, 2025 - 11:57" class="datetime"&gt;Thu, 12/11/2025 - 11:57&lt;/time&gt;
+&lt;/span&gt;
+  &lt;div class="layout layout--onecol"&gt;
+    &lt;div class="layout__region layout__region--content"&gt;
+      
+
+            &lt;div class="field field--name-field-event-dates field--type-daterange field--label-hidden field__item"&gt;&lt;time datetime="2026-10-20T12:00:00Z" class="datetime"&gt;October 20 2026&lt;/time&gt;
+&lt;/div&gt;
+      
+
+            &lt;div class="field field--name-field-event-time field--type-time-range field--label-hidden field__item"&gt;6:00 PM - 10:00 PM&lt;/div&gt;
+      
+
+  &lt;div class="field field--name-field-all-day-event field--type-boolean field--label-inline"&gt;
+    &lt;div class="field__label"&gt;All Day Event&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-event-registration field--type-boolean field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Event Registration&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Free&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-email field--type-email field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Email&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;a href="mailto:CouncilOffice@bellevuewa.gov"&gt;CouncilOffice@bellevuewa.gov&lt;/a&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-telephone field--type-telephone field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Telephone&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;a href="tel:425-452-7810"&gt;425-452-7810&lt;/a&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-address field--type-address field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Location&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;p class="address" translate="no"&gt;
+          Bellevue City Hall, 450 110th Ave NE, Council Chambers (Room 1E-126)          &lt;/p&gt;
+&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Description&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;p&gt;&lt;span&gt;City Council meetings are held the first four Tuesdays of each month. The meetings are hybrid, with in-person and virtual options.&amp;nbsp;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span&gt;Connection details can be found on the associated meeting agenda at this link:&amp;nbsp;&lt;/span&gt;&lt;a href="https://bellevue.legistar.com/Calendar.aspx"&gt;&lt;span&gt;Council Agendas&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;span&gt;The meeting may also be viewed live on Bellevue TV channel 21 or livestreamed on&amp;nbsp;&lt;/span&gt;&lt;a href="https://www.youtube.com/bellevuetelevision" target="_blank" title="(opens in a new window)"&gt;&lt;span&gt;Bellevue TV YouTube&lt;/span&gt;&lt;/a&gt;&lt;span&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span&gt;&lt;strong&gt;Oral Communications&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span&gt;To speak at the meeting, you may attend in-person, via phone, or Zoom. To be added to the speaker list for oral communications, please fill out the webform to&amp;nbsp;&lt;/span&gt;&lt;a href="https://bellevuewa.gov/council-oral-comms"&gt;&lt;span&gt;sign up&lt;/span&gt;&lt;/a&gt;&lt;span&gt;. The form will be open at 12 p.m. the day of the meeting.&amp;nbsp;&lt;/span&gt;&lt;/p&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-hide-from-city-calendar field--type-boolean field--label-above"&gt;
+    &lt;div class="field__label"&gt;Hide from City Calendar&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-canceled field--type-boolean field--label-above"&gt;
+    &lt;div class="field__label"&gt;Canceled&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+    &lt;/div&gt;
+  &lt;/div&gt;
+</description>
+  <pubDate>Thu, 11 Dec 2025 19:57:26 +0000</pubDate>
+    <dc:creator>KMMiller</dc:creator>
+    <guid isPermaLink="false">215421 at https://bellevuewa.gov</guid>
+    </item>
+<item>
+  <title>Eastside Día de los Muertos Celebration</title>
+  <link>https://bellevuewa.gov/events/eastside-dia-de-los-muertos-celebration</link>
+  <description>&lt;span class="field field--name-title field--type-string field--label-hidden"&gt;Eastside Día de los Muertos Celebration&lt;/span&gt;
+&lt;span class="field field--name-uid field--type-entity-reference field--label-hidden"&gt;&lt;span lang about="https://bellevuewa.gov/users/emercado" typeof="schema:Person" property="schema:name" datatype&gt;EMercado&lt;/span&gt;&lt;/span&gt;
+&lt;span class="field field--name-created field--type-created field--label-hidden"&gt;&lt;time datetime="2026-10-07T10:31:51-07:00" title="Wednesday, October 7, 2026 - 10:31" class="datetime"&gt;Wed, 10/07/2026 - 10:31&lt;/time&gt;
+&lt;/span&gt;
+  &lt;div class="layout layout--onecol"&gt;
+    &lt;div class="layout__region layout__region--content"&gt;
+      
+
+            &lt;div class="field field--name-field-event-dates field--type-daterange field--label-hidden field__item"&gt;&lt;time datetime="2026-10-24T12:00:00Z" class="datetime"&gt;October 24 2026&lt;/time&gt;
+&lt;/div&gt;
+      
+
+            &lt;div class="field field--name-field-event-time field--type-time-range field--label-hidden field__item"&gt;12:00 PM - 4:00 PM&lt;/div&gt;
+      
+
+  &lt;div class="field field--name-field-all-day-event field--type-boolean field--label-inline"&gt;
+    &lt;div class="field__label"&gt;All Day Event&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-event-registration field--type-boolean field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Event Registration&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Free&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-email field--type-email field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Email&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;a href="mailto:diversity@bellevuewa.gov"&gt;diversity@bellevuewa.gov&lt;/a&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-telephone field--type-telephone field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Telephone&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;a href="tel:425-452-6800"&gt;425-452-6800&lt;/a&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-address field--type-address field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Location&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;p class="address" translate="no"&gt;
+        Crossroads Community Center,
+        16000 NE 10th St          &lt;/p&gt;
+&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="clearfix text-formatted field field--name-body field--type-text-with-summary field--label-inline"&gt;
+    &lt;div class="field__label"&gt;Description&lt;/div&gt;
+                  &lt;div class="field__item"&gt;&lt;p&gt;Join our main event at Crossroads Community Center! Celebrate with live performances, hands-on activities, community ofrendas, food vendors and family-friendly fun honoring the traditions of Día de los Muertos.&lt;/p&gt;&lt;p&gt;&lt;em&gt;&lt;span&gt;This event is part of the city's community-led, city-supported &lt;/span&gt;&lt;/em&gt;&lt;a href="https://bellevuewa.gov/city-government/departments/human-resources/diversity-advantage-initiative/cross-cultural-center-without-walls" data-entity-type="node" data-entity-uuid="1c87ed98-1c49-4221-8598-b35ae1054ac2" data-entity-substitution="canonical" title="Cross-Cultural Center Without Walls"&gt;&lt;em&gt;&lt;span&gt;Cross-Cultural Center without Walls&lt;/span&gt;&lt;/em&gt;&lt;/a&gt;&lt;em&gt;&lt;span&gt; and is not hosted by the City of Bellevue.&lt;/span&gt;&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-hide-from-city-calendar field--type-boolean field--label-above"&gt;
+    &lt;div class="field__label"&gt;Hide from City Calendar&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-canceled field--type-boolean field--label-above"&gt;
+    &lt;div class="field__label"&gt;Canceled&lt;/div&gt;
+                  &lt;div class="field__item"&gt;Off&lt;/div&gt;
+              &lt;/div&gt;
+
+
+  &lt;div class="field field--name-field-location field--type-entity-reference field--label-above"&gt;
+    &lt;div class="field__label"&gt;Location&lt;/div&gt;
+        &lt;div class="field__items"&gt;
+                    &lt;div class="field__item"&gt;&lt;a href="https://bellevuewa.gov/taxonomy/term/6316" hreflang="en"&gt;Crossroads Community Center&lt;/a&gt;&lt;/div&gt;
+                &lt;/div&gt;
+      &lt;/div&gt;
+
+    &lt;/div&gt;
+  &lt;/div&gt;
+</description>
+  <pubDate>Wed, 07 Oct 2026 17:31:51 +0000</pubDate>
+    <dc:creator>EMercado</dc:creator>
+    <guid isPermaLink="false">219836 at https://bellevuewa.gov</guid>
+    </item>
+</channel>
+</rss>

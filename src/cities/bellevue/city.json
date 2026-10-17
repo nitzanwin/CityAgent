@@ -14,6 +14,7 @@
       "url": "https://bellevuewa.gov/calendar"
     }
   ],
+  "eventsFeed": "https://bellevuewa.gov/calendar/events.xml",
   "openRequests": {
     "_about": "The city's own 311 system, read-only: lets CityDesk say a problem is already reported to the city. Public data; may not be used commercially.",
     "provider": "arcgis-311",

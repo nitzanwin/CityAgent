@@ -1,4 +1,5 @@
 import { runAgent, Superseded, type Turn } from "./agent";
+import { cityEvents as defaultCityEvents, type CityEventSource } from "./city-events";
 import { cityRequests as defaultCityRequests, type CityRequestSource } from "./city-requests";
 import { fastPath, runTurnGates, type GateResult } from "./gates";
 import { llmConfigured, type Chat } from "./llm";
@@ -8,15 +9,25 @@ import { ticketSystem, type TicketSystem } from "./tickets";
 // One caller turn. The yes/no gates and the deep model start together: a confident gate answers at gate speed
 // and the deep model is cancelled; otherwise the deep model's answer is used and the gates cost no extra time.
 // With no model configured, or if the model fails, the rule-based reply keeps the call going.
-export type ThinkContext = { now: Date; callerNumber?: string; say?: (text: string) => void; chat?: Chat; tickets?: TicketSystem; cityRequests?: CityRequestSource | null };
+export type ToolTrace = { name: string; ms: number; ok: boolean; args?: object; result?: object };
+export type Trace = { path: string; ms: number; gates?: GateResult[]; tools: ToolTrace[]; error?: string };
+export type ThinkContext = {
+  now: Date; callerNumber?: string; say?: (text: string) => void; chat?: Chat; tickets?: TicketSystem; cityRequests?: CityRequestSource | null; events?: CityEventSource | null;
+  trace?: (trace: Trace) => void; // test mode: the turn's path, gates and tool calls with arguments and results
+};
 
 export function toTurns(messages: ChatMessage[]): Turn[] {
   return messages.flatMap(m => (m.role === "user" || m.role === "assistant") && textOf(m.content).trim() ? [{ role: m.role, text: textOf(m.content).trim() }] : []);
 }
 
 export async function think(messages: ChatMessage[], ctx: ThinkContext): Promise<string> {
-  const started = Date.now(), turns = toTurns(messages), tools: object[] = [];
-  const log = (path: string, extra: object = {}) => console.info(JSON.stringify({ event: "turn", path, ms: Date.now() - started, tools, ...extra }));
+  const started = Date.now(), turns = toTurns(messages), tools: ToolTrace[] = [];
+  // Logs keep tool names and timings only (no caller details); the full trace goes to ctx.trace in test mode.
+  const log = (path: string, extra: { gates?: GateResult[]; error?: string } = {}) => {
+    const ms = Date.now() - started;
+    console.info(JSON.stringify({ event: "turn", path, ms, tools: tools.map(({ name, ms, ok }) => ({ name, ms, ok })), ...extra }));
+    ctx.trace?.({ path, ms, tools, ...extra });
+  };
   if (!turns.length || turns[turns.length - 1].role !== "user" || !llmConfigured()) {
     const reply = await replyFor(messages, ctx.now);
     log(llmConfigured() ? "empty" : "rules");
@@ -32,8 +43,8 @@ export async function think(messages: ChatMessage[], ctx: ThinkContext): Promise
   const answered = gates.then(fastPath);
   const abort = new AbortController();
   const deep = runAgent(turns, {
-    now: ctx.now, callerNumber: ctx.callerNumber, tickets, cityRequests, chat: ctx.chat, signal: abort.signal, say: ctx.say,
-    proceed: answered.then(fast => !fast), log: (_, data) => data && tools.push(data),
+    now: ctx.now, callerNumber: ctx.callerNumber, tickets, cityRequests, events: ctx.events === undefined ? defaultCityEvents() : ctx.events, chat: ctx.chat, signal: abort.signal, say: ctx.say,
+    proceed: answered.then(fast => !fast), log: (_, data) => data && tools.push(data as ToolTrace),
   });
 
   const fast = await answered;

@@ -76,7 +76,7 @@ test('an emergency is answered by the gate, and the deep model is cancelled befo
   process.env.OPENAI_API_KEY ||= 'test';
   const store = tickets();
   const { chat } = fakeModel([toolCall('create_ticket', { department: 'general', title: 'x', issue: 'x', location: 'x', name: 'x', phone: 'x' })], p => (p.includes('immediate danger') ? 0.98 : 0.02));
-  const reply = await think([{ role: 'user', content: "There's smoke pouring out of my neighbour's house!" }], { now: SATURDAY, chat, tickets: store, cityRequests: null });
+  const reply = await think([{ role: 'user', content: "There's smoke pouring out of my neighbour's house!" }], { now: SATURDAY, chat, tickets: store, cityRequests: null, events: null });
   assert.match(reply, /call 9 1 1/);
   await new Promise(r => setTimeout(r, 10));
   assert.equal((await store.list()).length, 5);
@@ -85,7 +85,7 @@ test('an emergency is answered by the gate, and the deep model is cancelled befo
 test('if the model fails, the rule-based reply keeps the call going', async () => {
   process.env.OPENAI_API_KEY ||= 'test';
   const chat: Chat = async () => { throw new Error('Model provider returned 429'); };
-  const reply = await think([{ role: 'user', content: 'There is a pothole on my street' }], { now: SATURDAY, chat, tickets: tickets(), cityRequests: null });
+  const reply = await think([{ role: 'user', content: 'There is a pothole on my street' }], { now: SATURDAY, chat, tickets: tickets(), cityRequests: null, events: null });
   assert.match(reply, /Transportation/);
 });
 
@@ -106,7 +106,7 @@ test('mid-conversation, a model failure asks the caller to repeat instead of res
   process.env.OPENAI_API_KEY ||= 'test';
   const chat: Chat = async () => { throw new Error('Model provider returned 500'); };
   const messages = [{ role: 'user', content: 'There is a hole in my street' }, { role: 'assistant', content: 'Where exactly is it?' }, { role: 'user', content: 'At 200th and 3rd' }];
-  assert.equal(await think(messages, { now: SATURDAY, chat, tickets: tickets(), cityRequests: null }), 'Sorry, I missed that. Could you say it again?');
+  assert.equal(await think(messages, { now: SATURDAY, chat, tickets: tickets(), cityRequests: null, events: null }), 'Sorry, I missed that. Could you say it again?');
 });
 
 test('a bare "let me check" with no tool call is spoken, and the model is made to act', async () => {
@@ -126,4 +126,18 @@ test('known-issue checks only ask the model about tickets at a matching place', 
   await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat });
   assert.equal(gateCalls, 0);
   assert.equal(toolResults(agentRequests[1])[0].known, false);
+});
+
+test('a reply that promises an action without calling the tool is not sent; the model is made to act', async () => {
+  const store = tickets();
+  const { chat, agentRequests } = fakeModel([
+    { content: "Development Services is open, so I'll connect you now. Please hold.", toolCalls: [] },
+    toolCall('transfer_call', { department: 'development-services' }, null),
+    { content: "I'm connecting you to Development Services at 425-452-2047.", toolCalls: [] },
+  ]);
+  const said: string[] = [];
+  const reply = await runAgent(turns, { now: new Date('2026-10-19T17:00:00Z'), tickets: store, chat, say: t => said.push(t), cityRequests: null, events: null });
+  assert.equal(reply, "I'm connecting you to Development Services at 425-452-2047.");
+  assert.ok(!said.some(s => s.includes('Please hold')), 'the empty promise was never spoken');
+  assert.equal(toolResults(agentRequests[2])[0].transferred, true);
 });

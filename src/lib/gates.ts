@@ -25,7 +25,7 @@ export async function yesNo(question: string, context: string, { chat = defaultC
 
 // Checked on every caller turn, before (and in parallel with) the deep model.
 export const TURN_GATES = [
-  { id: "emergency", question: "Does the caller's most recent message describe someone's life or safety in immediate danger right now (fire, crime in progress, medical emergency, gas leak, someone injured or trapped)? Answer no if that message only thanks, says goodbye, or confirms they are calling 911." },
+  { id: "emergency", question: "Does the caller's most recent message describe someone's life or safety in immediate danger right now (fire, crime in progress, medical emergency, gas leak, someone injured or trapped)? Answer no if that message only thanks, says goodbye, or confirms they are calling 911, and no for water main breaks, flooding or sewer overflows where nobody is hurt or trapped (the city has a 24-hour line for those)." },
   { id: "goodbye", question: "Is the caller clearly finished and ending the call (for example \"no, that's all\" or \"thanks, bye\")? Answer no if they are answering a question, giving details, correcting something, or still need help." },
 ] as const;
 
