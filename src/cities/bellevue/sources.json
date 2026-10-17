@@ -1,0 +1,38 @@
+[
+  { "url": "https://bellevuewa.gov/contact-us", "title": "Contact Us", "topic": "general" },
+  { "url": "https://bellevuewa.gov/city-government/departments/finance/city-hall-services", "title": "City Hall Services (Service First)", "topic": "general" },
+  { "url": "https://bellevuewa.gov/city-government/departments/finance/mybellevue", "title": "MyBellevue", "topic": "general" },
+  { "url": "https://bellevuewa.gov/barking-dogs-other-animal-concerns", "title": "Barking dogs and other animal concerns", "topic": "general" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/transportation", "title": "Transportation", "topic": "transportation" },
+  { "url": "https://bellevuewa.gov/city-government/departments/transportation/safety-and-maintenance/street-maintenance", "title": "Street Maintenance", "topic": "transportation" },
+  { "url": "https://bellevuewa.gov/city-government/departments/transportation/safety-and-maintenance/traffic-and-street-lighting-operations/traffic-signals", "title": "Traffic Signals", "topic": "transportation" },
+  { "url": "https://bellevuewa.gov/city-government/departments/transportation/safety-and-maintenance/traffic-and-street-lighting-operations/street-lights", "title": "Street Lights", "topic": "transportation" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/utilities", "title": "Utilities", "topic": "utilities" },
+  { "url": "https://bellevuewa.gov/city-government/departments/utilities/manage-your-utility-services", "title": "Manage Your Utility Services", "topic": "utilities" },
+  { "url": "https://bellevuewa.gov/city-government/departments/utilities/manage-your-utility-services/solid-waste", "title": "Garbage, Recycling and Yard Waste", "topic": "utilities" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/police/about-police/contacts", "title": "Police Contacts", "topic": "police" },
+  { "url": "https://bellevuewa.gov/city-government/departments/police/report-and-prevent-crime", "title": "Report and Prevent Crime", "topic": "police" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/development/contact-us", "title": "Development Services Contact", "topic": "development-services" },
+  { "url": "https://bellevuewa.gov/city-government/departments/development/codes-and-guidelines/code-compliance", "title": "Code Compliance", "topic": "development-services" },
+  { "url": "https://bellevuewa.gov/city-government/departments/development/codes-and-guidelines/code-compliance/graffiti", "title": "Graffiti", "topic": "development-services" },
+  { "url": "https://bellevuewa.gov/city-government/departments/development/codes-and-guidelines/code-compliance/construction-site-noise", "title": "Construction Site Noise", "topic": "development-services" },
+  { "url": "https://bellevuewa.gov/city-government/departments/development/codes-and-guidelines/code-compliance/storage-of-inoperable-vehicles", "title": "Storage of Inoperable Vehicles", "topic": "development-services" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/community-development/neighborhoods/neighborhood-improvement/keep-bellevue-beautiful/abandoned-shopping-cart-retrieval", "title": "Abandoned Shopping Cart Retrieval", "topic": "community-development" },
+  { "url": "https://bellevuewa.gov/city-government/departments/community-development/conflict-resolution-center", "title": "Conflict Resolution Center", "topic": "community-development" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/parks/about-us", "title": "Parks & Community Services", "topic": "parks" },
+  { "url": "https://bellevuewa.gov/city-government/departments/parks/parks-and-trails/park-guidelines/dogs-bellevue-parks", "title": "Dogs in Bellevue Parks", "topic": "parks" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/city-managers-office/office-housing/homelessness-bellevue", "title": "Homelessness in Bellevue", "topic": "city-managers-office" },
+  { "url": "https://bellevuewa.gov/city-government/departments/city-managers-office/office-housing/homelessness-bellevue/encampments-living-vehicles", "title": "Encampments and Living Vehicles", "topic": "city-managers-office" },
+
+  { "url": "https://bellevuewa.gov/city-government/departments/fire", "title": "Fire Department", "topic": "fire" },
+  { "url": "https://bellevuewa.gov/city-news/private-fireworks-still-dangerous-still-illegal", "title": "Private fireworks: still dangerous, still illegal", "topic": "fire" },
+
+  { "url": "https://bellevuewa.gov/calendar", "feed": "https://bellevuewa.gov/calendar/events.xml", "title": "City Events", "topic": "events" }
+]

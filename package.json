@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "setup:trello": "tsx scripts/setup-trello.ts"
+    "setup:trello": "tsx scripts/setup-trello.ts",
+    "scrape:city": "tsx scripts/scrape-city.ts"
   },
   "dependencies": {
     "@vapi-ai/web": "2.7.1",
@@ -21,7 +22,11 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/turndown": "5.0.6",
+    "cheerio": "1.2.0",
     "tsx": "^4.20.0",
+    "turndown": "7.2.4",
+    "turndown-plugin-gfm": "1.0.2",
     "typescript": "^5.8.0"
   }
 }
