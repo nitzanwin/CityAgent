@@ -37,6 +37,7 @@ const summary = (t: Ticket) => ({
   updates: t.updates.slice(-3).map(u => u.text), otherCallersFollowing: t.followers.length,
 });
 const citySummary = (r: CityRequest) => ({ system: r.system, reference: r.reference, title: r.title, department: departmentName(r.department), location: r.location, status: STATUS_LABEL[r.status], reportedOn: r.reportedOn });
+const TICKET_NOTE = "Tell the caller the reference (spokenReference), the status, the latest update and what happens next.";
 const CITY_NOTE = "Already in the city's own 311 system. CityDesk can't add the caller to it: tell them it's already been reported to the city, when, and its status. Offer a CityDesk ticket only if they have something new to add.";
 const departmentIds = departments.map(d => d.id);
 // Requirement 5: whether to route or open a ticket is decided by business hours, never by the model.
@@ -88,7 +89,7 @@ async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
         ctx.cityRequests?.open().catch(e => { ctx.log?.("tool", { name: "city-requests", ok: false, error: String(e).slice(0, 120) }); return []; }) ?? [],
       ]);
       const all = [
-        ...ours.map(t => ({ title: t.title, issue: t.issue, location: t.location, department: t.department, result: () => ({ known: true, source: "ticket", ticket: summary(t) }) })),
+        ...ours.map(t => ({ title: t.title, issue: t.issue, location: t.location, department: t.department, result: () => ({ known: true, source: "ticket", ticket: summary(t), note: TICKET_NOTE }) })),
         ...theirs.map(r => ({ title: r.title, issue: r.title, location: r.location, department: r.department, result: () => ({ known: true, source: "city", request: citySummary(r), note: CITY_NOTE }) })),
       ];
       const sameDepartment = (c: { department: string }) => Number(c.department === args.department);
@@ -107,13 +108,13 @@ async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
       }
       if (digits) {
         const t = await tickets.get(args.reference);
-        return t ? { found: true, ticket: summary(t) } : { found: false, reason: "No ticket has that reference." };
+        return t ? { found: true, ticket: summary(t), note: TICKET_NOTE } : { found: false, reason: "No ticket has that reference." };
       }
       const phone = /\d{7}/.test(String(args.phone ?? "").replace(/\D/g, "")) ? String(args.phone) : callerNumber;
       if (!phone) return { found: false, reason: "No reference given, and this call has no caller ID. Ask the caller for their reference or the phone number they gave when reporting." };
       const mine = (await tickets.list()).filter(t => involves(t, phone)).slice(-3);
       const linked = (t: Ticket) => ({ ...summary(t), caller: `This number ${samePhone(t.reporter.phone, phone) ? "reported this ticket" : "follows this ticket"}, so they'll already be contacted on updates.` });
-      return mine.length ? { found: true, tickets: mine.map(linked) } : { found: false, reason: "No CityDesk tickets are linked to this phone number. The city's own 311 requests can only be looked up by their request number." };
+      return mine.length ? { found: true, tickets: mine.map(linked), note: TICKET_NOTE } : { found: false, reason: "No CityDesk tickets are linked to this phone number. The city's own 311 requests can only be looked up by their request number." };
     }
     case "create_ticket": {
       const rule = nextStep(now);
