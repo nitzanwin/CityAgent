@@ -12,6 +12,20 @@
     { "label": "Municipal code", "url": "https://bellevue.municipal.codes/" },
     { "label": "City calendar", "url": "https://bellevuewa.gov/calendar" }
   ],
+  "openRequests": {
+    "_about": "The city's own 311 system, read-only: lets CityDesk say a problem is already reported to the city. Public data; may not be used commercially.",
+    "provider": "arcgis-311",
+    "name": "MyBellevue",
+    "url": "https://services1.arcgis.com/EYzEZbDhXZjURPbP/arcgis/rest/services/MyBellevue_311/FeatureServer/0",
+    "fields": { "id": "ID", "type": "RequestType", "status": "Status", "address": "Address", "department": "Department", "created": "DateCreated" },
+    "openStatuses": ["submitted", "received", "in progress"],
+    "inProgressStatuses": ["in progress"],
+    "fixedStatuses": ["completed"],
+    "departments": {
+      "Transportation": "transportation", "Utilities": "utilities", "Police Department": "police", "Development Services": "development-services",
+      "Community Development": "community-development", "Parks & Community Services": "parks", "City Manager's Office": "city-managers-office", "Fire": "fire"
+    }
+  },
   "_departments": "Bellevue's real departments and what they handle, from MyBellevue 311 data (34,576 requests, Jun 2021 – Oct 2026). Phone numbers are mock.",
   "departments": [
     { "id": "transportation", "name": "Transportation", "covers": "potholes and street repairs, traffic signals, streetlights, sidewalks, road debris, overgrown vegetation along roads, street signs, traffic concerns, and scooters or bikes parked in the way", "mockPhone": "+1-555-0101", "keywords": ["pothole", "hole", "road", "street", "streetlight", "light", "signal", "sidewalk", "sign", "debris", "traffic", "scooter", "bike", "lime"] },

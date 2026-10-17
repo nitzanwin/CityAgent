@@ -28,7 +28,7 @@ const turns: Turn[] = [{ role: 'assistant', text: 'Welcome to Bellevue CityDesk.
 test('a known problem is matched by yes/no checks and reported back instead of a duplicate', async () => {
   const { chat, agentRequests } = fakeModel(
     [toolCall('find_known_issue', { department: 'transportation', issue: 'Big pothole', location: 'NE 8th St at 112th' }), { content: "That's already reported and scheduled for Tuesday.", toolCalls: [] }],
-    prompt => (prompt.includes('Existing ticket: Large pothole') ? 0.97 : 0.03),
+    prompt => (prompt.includes('Existing report: Large pothole') ? 0.97 : 0.03),
   );
   const said: string[] = [];
   const reply = await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, say: t => said.push(t) });
@@ -76,7 +76,7 @@ test('an emergency is answered by the gate, and the deep model is cancelled befo
   process.env.OPENAI_API_KEY ||= 'test';
   const store = tickets();
   const { chat } = fakeModel([toolCall('create_ticket', { department: 'general', title: 'x', issue: 'x', location: 'x', name: 'x', phone: 'x' })], p => (p.includes('immediate danger') ? 0.98 : 0.02));
-  const reply = await think([{ role: 'user', content: "There's smoke pouring out of my neighbour's house!" }], { now: SATURDAY, chat, tickets: store });
+  const reply = await think([{ role: 'user', content: "There's smoke pouring out of my neighbour's house!" }], { now: SATURDAY, chat, tickets: store, cityRequests: null });
   assert.match(reply, /call 9 1 1/);
   await new Promise(r => setTimeout(r, 10));
   assert.equal((await store.list()).length, 5);
@@ -85,7 +85,7 @@ test('an emergency is answered by the gate, and the deep model is cancelled befo
 test('if the model fails, the rule-based reply keeps the call going', async () => {
   process.env.OPENAI_API_KEY ||= 'test';
   const chat: Chat = async () => { throw new Error('Model provider returned 429'); };
-  const reply = await think([{ role: 'user', content: 'There is a pothole on my street' }], { now: SATURDAY, chat, tickets: tickets() });
+  const reply = await think([{ role: 'user', content: 'There is a pothole on my street' }], { now: SATURDAY, chat, tickets: tickets(), cityRequests: null });
   assert.match(reply, /Transportation/);
 });
 
@@ -106,7 +106,7 @@ test('mid-conversation, a model failure asks the caller to repeat instead of res
   process.env.OPENAI_API_KEY ||= 'test';
   const chat: Chat = async () => { throw new Error('Model provider returned 500'); };
   const messages = [{ role: 'user', content: 'There is a hole in my street' }, { role: 'assistant', content: 'Where exactly is it?' }, { role: 'user', content: 'At 200th and 3rd' }];
-  assert.equal(await think(messages, { now: SATURDAY, chat, tickets: tickets() }), 'Sorry, I missed that. Could you say it again?');
+  assert.equal(await think(messages, { now: SATURDAY, chat, tickets: tickets(), cityRequests: null }), 'Sorry, I missed that. Could you say it again?');
 });
 
 test('a bare "let me check" with no tool call is spoken, and the model is made to act', async () => {

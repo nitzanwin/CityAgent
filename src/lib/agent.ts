@@ -1,5 +1,6 @@
 import { cityKnowledge } from "../cities/knowledge";
 import { city, departmentName, departments } from "./city";
+import type { CityRequest, CityRequestSource } from "./city-requests";
 import { yesNo } from "./gates";
 import { chat as defaultChat, models, type Chat, type LlmMessage, type ToolCall, type ToolSpec } from "./llm";
 import { isOfficeOpen, nextOpening, spokenWhen } from "./routing";
@@ -9,6 +10,7 @@ import { involves, samePhone, STATUS_LABEL, type Ticket, type TicketSystem } fro
 export type Turn = { role: "user" | "assistant"; text: string };
 export type AgentContext = {
   now: Date; callerNumber?: string; tickets: TicketSystem; chat?: Chat; signal?: AbortSignal;
+  cityRequests?: CityRequestSource | null; // the city's own 311 system, read-only
   proceed?: Promise<boolean>; // resolves false when a yes/no gate already answered the turn
   say?: (text: string) => void; // speak a lead-in ("Let me check.") while tools run
   log?: (event: string, data?: object) => void;
@@ -23,19 +25,21 @@ const summary = (t: Ticket) => ({
   location: t.location, status: STATUS_LABEL[t.status], reportedOn: t.reportedOn,
   updates: t.updates.slice(-3).map(u => u.text), otherCallersFollowing: t.followers.length,
 });
+const citySummary = (r: CityRequest) => ({ system: r.system, reference: r.reference, title: r.title, department: departmentName(r.department), location: r.location, status: STATUS_LABEL[r.status], reportedOn: r.reportedOn });
+const CITY_NOTE = "Already in the city's own 311 system. CityDesk can't add the caller to it: tell them it's already been reported to the city, when, and its status. Offer a CityDesk ticket only if they have something new to add.";
 const departmentIds = departments.map(d => d.id);
 // "NE 8th St at 112th Ave NE" → ["8", "112"]: the words that identify a place, without street-type filler.
-const FILLER = new Set(["at", "and", "the", "of", "on", "near", "by", "in", "st", "street", "ave", "avenue", "rd", "road", "way", "blvd", "boulevard", "dr", "drive", "ne", "nw", "se", "sw", "n", "s", "e", "w", "corner", "intersection", "between", "block", "right", "middle", "lane"]);
+const FILLER = new Set(["at", "and", "the", "of", "on", "near", "by", "in", "st", "street", "ave", "avenue", "rd", "road", "way", "blvd", "boulevard", "dr", "drive", "pl", "place", "ct", "court", "ln", "pkwy", "parkway", "hwy", "highway", "ne", "nw", "se", "sw", "n", "s", "e", "w", "corner", "intersection", "between", "block", "right", "middle", "lane"]);
 export const placeWords = (location: string) => [...new Set(location.toLowerCase().replace(/(\d+)(st|nd|rd|th)\b/g, "$1").split(/[^a-z0-9]+/).filter(w => w && !FILLER.has(w)))];
 const fn = (name: string, description: string, properties: Record<string, object>, required: string[] = Object.keys(properties)): ToolSpec =>
   ({ type: "function", function: { name, description, parameters: { type: "object", properties, required, additionalProperties: false } } });
 const text = (description: string) => ({ type: "string", description });
 
 export const TOOLS: ToolSpec[] = [
-  fn("find_known_issue", "Check whether a reported problem is already known (an open ticket for the same problem at the same place). Call before opening any new ticket.",
+  fn("find_known_issue", "Check whether a reported problem is already known: an open CityDesk ticket, or a request already in the city's own 311 system, for the same problem at the same place. Call before opening any new ticket.",
     { department: { type: "string", enum: departmentIds }, issue: text("What is wrong, in a short sentence"), location: text("Where it is, as precisely as the caller said") }),
   fn("lookup_ticket", "Look up an existing ticket: by reference if the caller has one, otherwise by the caller's phone number.",
-    { reference: text("The ticket reference, digits only (e.g. 1042), or an empty string to search by caller ID") }),
+    { reference: text("Digits only: a CityDesk reference (e.g. 1042) or a city 311 request number (e.g. 18808602); an empty string to search by caller ID") }),
   fn("create_ticket", "Open a new ticket. Only after the caller confirmed the read-back.", {
     department: { type: "string", enum: departmentIds }, title: text("Short title, e.g. 'Pothole in the right lane'"),
     issue: text("What is wrong, in the caller's words"), location: text("Exact location"), name: text("Caller's name"), phone: text("Callback number"),
@@ -50,19 +54,32 @@ async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
   const { tickets, now, callerNumber } = ctx;
   switch (call.function.name) {
     case "find_known_issue": {
-      // Rules first: only open tickets in that department whose location shares a word (street, number, place).
-      // Then one yes/no per remaining candidate, in parallel: "is this the same problem?"
+      // Rules first: open CityDesk tickets and the city's own open requests whose location shares a word (street,
+      // number, place), closest first. Then one yes/no per remaining candidate, in parallel: "is this the same problem?"
       const where = placeWords(args.location);
-      const candidates = (await tickets.list({ open: true, department: args.department }))
-        .map(t => ({ t, overlap: placeWords(t.location).filter(w => where.includes(w)).length })).filter(c => c.overlap > 0)
-        .sort((a, b) => b.overlap - a.overlap).slice(0, 3).map(c => c.t);
-      const checks = await Promise.all(candidates.map(async t => ({ t, ...(await yesNo("Is the new report about the same problem at the same place as the existing ticket?",
-        `New report: ${args.issue} — at ${args.location}\nExisting ticket: ${t.title}. ${t.issue} — at ${t.location}`, { chat: ctx.chat, signal: ctx.signal })) })));
+      const [ours, theirs] = await Promise.all([
+        tickets.list({ open: true }),
+        ctx.cityRequests?.open().catch(e => { ctx.log?.("tool", { name: "city-requests", ok: false, error: String(e).slice(0, 120) }); return []; }) ?? [],
+      ]);
+      const all = [
+        ...ours.map(t => ({ title: t.title, issue: t.issue, location: t.location, department: t.department, result: () => ({ known: true, source: "ticket", ticket: summary(t) }) })),
+        ...theirs.map(r => ({ title: r.title, issue: r.title, location: r.location, department: r.department, result: () => ({ known: true, source: "city", request: citySummary(r), note: CITY_NOTE }) })),
+      ];
+      const sameDepartment = (c: { department: string }) => Number(c.department === args.department);
+      const candidates = all.map(c => ({ c, overlap: placeWords(c.location).filter(w => where.includes(w)).length })).filter(x => x.overlap > 0)
+        .sort((a, b) => b.overlap - a.overlap || sameDepartment(b.c) - sameDepartment(a.c)).slice(0, 3).map(x => x.c);
+      const checks = await Promise.all(candidates.map(async c => ({ c, ...(await yesNo("Is the new report about the same problem at the same place as the existing report?",
+        `New report: ${args.issue} — at ${args.location}\nExisting report: ${c.title}. ${c.issue} — at ${c.location}`, { chat: ctx.chat, signal: ctx.signal })) })));
       const match = checks.filter(c => c.yes && c.confidence >= 0.7).sort((a, b) => b.confidence - a.confidence)[0];
-      return match ? { known: true, ticket: summary(match.t) } : { known: false };
+      return match ? match.c.result() : { known: false };
     }
     case "lookup_ticket": {
-      if (/\d/.test(args.reference ?? "")) {
+      const digits = String(args.reference ?? "").replace(/\D/g, "");
+      if (digits.length >= 6 && ctx.cityRequests) {
+        const r = await ctx.cityRequests.get(digits);
+        return r ? { found: true, source: "city", request: citySummary(r), note: CITY_NOTE } : { found: false, reason: "The city's 311 system has no request with that number." };
+      }
+      if (digits) {
         const t = await tickets.get(args.reference);
         return t ? { found: true, ticket: summary(t) } : { found: false, reason: "No ticket has that reference." };
       }
@@ -110,7 +127,7 @@ How to speak:
 
 When the caller reports a problem:
 1. Tell them which department handles it and what that department covers, for example "That's Transportation; they look after potholes, streetlights and traffic signals."
-2. As soon as you know what and where, call find_known_issue. If it's already known, say so, give its status and latest update, and offer to add them so they're contacted when it's fixed (follow_ticket). Don't open a duplicate.
+2. As soon as you know what and where, call find_known_issue. If it's a CityDesk ticket, say so, give its status and latest update, and offer to add them so they're contacted when it's fixed (follow_ticket). If it's already in the city's own 311 system, say it's already been reported to the city, when, and its status; you can't add them to it. Don't open a duplicate.
 3. If departments are open, offer to transfer the call. If they're closed, say so and when they reopen, and explain that you can open a ticket and the department will contact them when they're back. Mention that for something urgent where nobody is in danger they can call the city's urgent line at ${city.urgentLine.phone}, and for danger, 911.
 4. To open a ticket, collect one at a time whatever you don't have yet: what's wrong, exactly where, their name, and a callback number.
 5. Read back all four details in one sentence and ask them to confirm. Only call create_ticket after a clear yes.
