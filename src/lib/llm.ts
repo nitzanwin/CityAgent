@@ -20,7 +20,10 @@ export const llmConfigured = () => Boolean(apiKey());
 export const models = {
   gate: () => process.env.LLM_GATE_MODEL || "gpt-4.1-nano",
   agent: () => process.env.LLM_AGENT_MODEL || "gpt-4.1",
+  // Used when the conversation model is rate-limited (limits are per model, so this one has its own allowance).
+  agentFallback: () => process.env.LLM_AGENT_FALLBACK_MODEL || "gpt-4.1-mini",
 };
+export const isRateLimit = (e: unknown) => /\b429\b|rate limit/i.test(String(e));
 
 // Reasoning models take reasoning_effort and max_completion_tokens, and reject temperature/logprobs.
 const effort = (model: string) => /^gpt-5(-|$)/.test(model) ? "minimal" : /^(gpt-5\.|gpt-6)/.test(model) ? "none" : /^o\d/.test(model) ? "low" : null;

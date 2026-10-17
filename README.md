@@ -1,4 +1,6 @@
-# CityDesk — Threefold AI Developer Task (starter)
+# CityDesk — Threefold AI Developer Task
+
+**Reviewers: start with [REVIEWERS.md](REVIEWERS.md)** — how to try it, what's built, the architecture and how it was evaluated.
 
 A **prototype**, not a finished municipal AI receptionist, built with Next.js and TypeScript. Designed for rapid iteration and architectural discussion.
 

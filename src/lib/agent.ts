@@ -4,7 +4,7 @@ import { city, departmentName, departments } from "./city";
 import type { CityEventSource } from "./city-events";
 import type { CityRequest, CityRequestSource } from "./city-requests";
 import { yesNo } from "./gates";
-import { chat as defaultChat, models, type Chat, type LlmMessage, type ToolCall, type ToolSpec } from "./llm";
+import { chat as defaultChat, isRateLimit, models, type Chat, type LlmMessage, type ToolCall, type ToolSpec } from "./llm";
 import { isOfficeOpen, nextOpening, officesNow, spokenWhen } from "./routing";
 import { involves, samePhone, STATUS_LABEL, type Ticket, type TicketSystem } from "./tickets";
 
@@ -233,10 +233,17 @@ export async function runAgent(turns: Turn[], ctx: AgentContext): Promise<string
   let done: string | null = null;
   const called = new Set<string>();
   for (let step = 0; step < MAX_STEPS; step++) {
-    const reply = await chat({ model: models.agent(), messages, tools: TOOLS, temperature: 0.3, signal: ctx.signal }).catch(e => {
-      if (done && !ctx.signal?.aborted) return { content: done, toolCalls: [] };
-      throw e;
-    });
+    const ask = (model: string) => chat({ model, messages, tools: TOOLS, temperature: 0.3, signal: ctx.signal });
+    const reply = await ask(models.agent())
+      .catch(e => {
+        if (!isRateLimit(e) || ctx.signal?.aborted) throw e;
+        ctx.log?.("tool", { name: "rate-limited: using fallback model", ms: 0, ok: false });
+        return ask(models.agentFallback());
+      })
+      .catch(e => {
+        if (done && !ctx.signal?.aborted) return { content: done, toolCalls: [] };
+        throw e;
+      });
     if (!reply.toolCalls.length) {
       const said = reply.content?.trim() ?? "";
       // A promise with no tool behind it ("let me check", "I'll connect you") would be a lie to the caller: make the

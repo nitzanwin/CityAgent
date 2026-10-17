@@ -161,3 +161,15 @@ test("asking for the caller's own callback number is fine; asking whether they w
   assert.equal(await asks('Can I get your name and a callback number?'), false);
   assert.equal(await asks('Would you like to report this car, or do you need their phone number?'), true);
 });
+
+test('if the conversation model is rate-limited, the fallback model answers instead of the keyword rules', async () => {
+  const models: string[] = [];
+  const chat: Chat = async request => {
+    if (!request.tools) return answer(0.02);
+    models.push(request.model);
+    if (request.model === 'gpt-4.1') throw new Error('Model provider returned 429: Rate limit reached for gpt-4.1');
+    return { content: 'Answered by the fallback model.', toolCalls: [] };
+  };
+  assert.equal(await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, cityRequests: null, events: null }), 'Answered by the fallback model.');
+  assert.deepEqual(models, ['gpt-4.1', 'gpt-4.1-mini']);
+});

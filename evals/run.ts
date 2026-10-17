@@ -13,14 +13,14 @@ import path from "node:path";
 import { scenarios, type Expect, type Scenario } from "./scenarios";
 
 type ToolTrace = { name: string; ms: number; ok: boolean; args?: Record<string, unknown>; result?: Record<string, unknown> };
-type Trace = { path: string; ms: number; tools: ToolTrace[]; gates?: { id: string; yes: boolean; confidence: number }[] };
+type Trace = { path: string; ms: number; tools: ToolTrace[]; gates?: { id: string; yes: boolean; confidence: number }[]; error?: string };
 type Turn = { caller: string; reply: string; ms: number; trace?: Trace };
 type Check = { name: string; pass: boolean; detail?: string };
-type Outcome = { scenario: Scenario; turns: Turn[]; checks: Check[]; error?: string };
+type Outcome = { scenario: Scenario; turns: Turn[]; checks: Check[]; error?: string; retried?: string };
 
 const arg = (name: string) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : undefined; };
 const TARGET = (arg("target") ?? process.env.EVAL_TARGET ?? "https://cityagent.vercel.app").replace(/\/$/, "");
-const ONLY = arg("only"), JUDGE = !process.argv.includes("--no-judge"), CONCURRENCY = Number(arg("concurrency") ?? 4);
+const ONLY = arg("only"), JUDGE = !process.argv.includes("--no-judge"), CONCURRENCY = Number(arg("concurrency") ?? 3);
 const CALLER_MODEL = process.env.EVAL_CALLER_MODEL ?? "gpt-4.1-mini", JUDGE_MODEL = process.env.EVAL_JUDGE_MODEL ?? "gpt-4.1";
 const GREETING = "Welcome to Bellevue CityDesk. How can I help you today?";
 const { VAPI_LLM_SECRET: SECRET, OPENAI_API_KEY: OPENAI_KEY } = process.env;
@@ -84,7 +84,7 @@ function outcomes(turns: Turn[]) {
 
 async function judge(scenario: Scenario, turns: Turn[], rubric: string): Promise<Check> {
   const transcript = turns.map(t => `Caller: ${t.caller}\nAgent: ${t.reply}`).join("\n");
-  const tools = turns.flatMap(t => t.trace?.tools ?? []).map(c => `- ${c.name}(${JSON.stringify(c.args ?? {})}) → ${JSON.stringify(c.result ?? {}).slice(0, 1500)}`).join("\n") || "(none)";
+  const tools = turns.flatMap(t => t.trace?.tools ?? []).map(c => `- ${c.name}(${JSON.stringify(c.args ?? {})}) → ${JSON.stringify(c.result ?? {}).slice(0, 4000)}`).join("\n") || "(none)";
   const raw = await openai({ model: JUDGE_MODEL, temperature: 0, response_format: { type: "json_object" }, messages: [
     { role: "system", content: "You grade a call to a city's AI phone receptionist against a rubric. Reply with JSON: {\"pass\": true|false, \"reason\": \"one sentence\"}. Pass only if the rubric is fully met; judge substance, not wording. Facts that appear in the agent's tool results (shown below) or in the city's published information are not invented; only count something as invented if nothing supports it." },
     { role: "user", content: `Simulated time: ${scenario.at} (Bellevue). Rubric: ${rubric}\n\nTranscript:\n${transcript}\n\nTool calls:\n${tools}` },
@@ -119,10 +119,19 @@ async function score(scenario: Scenario, turns: Turn[]): Promise<Check[]> {
   return checks;
 }
 
+// A turn the model provider rate-limited is infrastructure, not the agent: wait and run the scenario once more.
+const rateLimited = (turns: Turn[]) => turns.some(t => /\b429\b|rate limit/i.test(t.trace?.error ?? ""));
 async function runOne(scenario: Scenario): Promise<Outcome> {
   try {
-    const turns = await play(scenario);
-    return { scenario, turns, checks: await score(scenario, turns) };
+    let turns = await play(scenario), retried: string | undefined;
+    if (rateLimited(turns)) {
+      await new Promise(r => setTimeout(r, 20_000));
+      turns = await play(scenario);
+      retried = "the model provider rate-limited the first attempt; this is the second";
+    }
+    const checks = await score(scenario, turns);
+    if (rateLimited(turns)) checks.push({ name: "not rate-limited", pass: false, detail: "the model provider rate-limited this attempt too (infrastructure, not agent behaviour)" });
+    return { scenario, turns, checks, retried };
   } catch (err) {
     return { scenario, turns: [], checks: [{ name: "ran", pass: false, detail: String(err) }], error: String(err) };
   }
@@ -139,7 +148,7 @@ function report(results: Outcome[], seconds: number): string {
   const block = (r: Outcome) => [
     `### ${passed(r) ? "✅" : "❌"} ${r.scenario.id} — ${r.scenario.title}`,
     "",
-    `_${r.scenario.requirement} · simulated time ${r.scenario.at}${r.scenario.callerNumber ? ` · caller ID ${r.scenario.callerNumber}` : " · web call"}${r.scenario.caller ? " · simulated caller" : ""}_`,
+    `_${r.scenario.requirement} · simulated time ${r.scenario.at}${r.scenario.callerNumber ? ` · caller ID ${r.scenario.callerNumber}` : " · web call"}${r.scenario.caller ? " · simulated caller" : ""}${r.retried ? ` · retried: ${r.retried}` : ""}_`,
     "",
     ...r.checks.map(c => `- ${c.pass ? "✅" : "❌"} ${c.name}${c.detail ? ` — ${c.detail}` : ""}`),
     "",
