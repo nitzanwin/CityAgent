@@ -34,11 +34,29 @@ dated snapshot).
 
 ## The task
 
-An automated phone system for a city: a caller rings in, the agent understands
-what they need, and either answers, routes them, or opens a ticket. The task
-defines a set of known questions and routes.
+The brief, as given:
 
-> _To add: the task brief and its list of known questions / routes._
+> Build a voice agent for a US city of your choice. It should handle:
+>
+> 1. Answering questions about the city's municipal code and website.
+> 2. Answering questions about current events in the city.
+> 3. Opening a ticket in a ticketing platform (Trello, Jira, Asana, Linear — your call).
+> 4. Routing the caller to the right department (a mock phone number is fine).
+> 5. Deterministically deciding whether to route or open a ticket based on the city's business hours.
+> 6. An evaluation/testing setup so you (and we) can tell whether the agent is doing the right thing.
+>
+> Time-box: ~4-6 hours. We do not expect all six items. Ship what you can.
+
+The city is **Bellevue, Washington**. How each item is covered:
+
+| # | Requirement | How CityDesk does it |
+|---|---|---|
+| 1 | Municipal code and website | City Code sections and city web pages saved as a dated snapshot, searched on demand (`search_city_info`); short checked facts always in the prompt (`knowledge.md`) |
+| 2 | Current events | The city calendar's live RSS feed, with the saved snapshot as fallback |
+| 3 | Open a ticket | Trello, behind a ticketing interface (any system can be plugged in); duplicates checked against our tickets and the city's own 311 requests |
+| 4 | Route to the right department | Departments and what they handle from Bellevue's 311 data; real department numbers; the transfer itself is simulated |
+| 5 | Route vs ticket by business hours | A rule, not the model: City Hall hours and holidays decide; the tools refuse a transfer when closed and a ticket when open |
+| 6 | Evaluation | Scripted Bellevue conversations run through the API in test mode (simulated clock, isolated ticket store, decision trace), checked by rules and an LLM judge |
 
 ## Principles
 
@@ -456,71 +474,90 @@ tickets and the Trello board were remapped.
   [MyBellevue app](https://bellevuewa.gov/city-news/mybellevue-app-gets-new-look),
   [ArcGIS item](https://www.arcgis.com/home/item.html?id=d36d5a23bd414aa08b2fc286de542655).
 
+**Municipal code:** the official code site (bellevue.municipal.codes) blocks
+automated access with a bot challenge, and its robots.txt says `ai-train=no`.
+We didn't work around it: the code pages in the snapshot are official
+bellevuewa.gov pages that quote or cite a specific section (noise BCC 9.18,
+parking BCC 11.23, parks BCC 3.43, junk vehicles BCC 9.09, tree code LUC
+20.20.900, the fireworks ban).
+
 **Terms:** Bellevue's data may not be used commercially or sold without the
 city's written permission, and isn't guaranteed accurate — fine for evaluating
 a demo, not for shipping in a product. NYC open data is free to use.
 SeeClickFix was only sampled lightly; check its API terms before pulling in
 bulk.
 
-## Evaluation plan (v1 — not built yet)
+## Evaluation (requirement 6)
 
-**Goal:** measure whether CityDesk handles the calls a real city gets, the way
-the call flow says it should, and catch regressions when the prompt or models
-change.
+**Built.** 41 scripted Bellevue calls, played through the real API — the same
+endpoint Vapi calls — and scored automatically. Latest run:
+[`evals/reports/latest.md`](evals/reports/latest.md).
 
-Four layers, cheapest first:
+```bash
+npm run eval                                    # against the deployed app
+npm run eval -- --target http://localhost:3000  # against a local build
+npm run eval -- --only routing                  # one requirement or scenario
+```
 
-1. **Routing coverage** (no conversation). Bellevue's top ~25 request types and
-   the department that handled each are the ground truth. One plain caller
-   sentence per type ("There's an abandoned shopping cart outside my
-   building"); check the department the agent names in its first reply.
-   Accuracy is weighted by request volume, so carts count twenty times more than
-   potholes. (The keyword fallback already has a unit test for the top seven.)
-2. **Real wording, first turn.** About 100 SeeClickFix descriptions, Bellevue
-   area first, each labelled with a Bellevue department through its category.
-   Each is the caller's first sentence; the reply must name the right
-   department and what it covers, ask one question for what's missing (usually
-   the exact place), invent nothing, read out no URL, and stay within two
-   sentences.
-3. **Phone-specific asks.** The NYC info-line topics that apply to any city:
-   checking a ticket's status, towed cars, bulky items, noisy neighbours,
-   parking tickets, complaints about city staff. Expected: look it up, route
-   it, or say honestly that the city's website has it — never make it up.
-4. **Full conversations.** The simulated-caller harness already used for
-   testing (a model plays the resident with a goal and talks to the real
-   endpoint turn by turn), seeded from 1–3 plus the flows from our feedback:
-   new issue while closed, known issue (join, don't duplicate), calling back by
-   caller ID and by reference, emergency, urgent but not dangerous, a caller who
-   changes their mind, a caller who pauses mid-sentence.
+### How it works
 
-Scoring for the full conversations, built from the feedback:
+- **Test mode.** Each call sends the shared secret plus `x-cityagent-test`
+  (a conversation id) and `x-cityagent-now` (a simulated time). The endpoint
+  then uses a ticket store of its own (seeded CD-1001…CD-1005, plus CD-1006 for
+  the test caller), a frozen copy of the city's 311 requests and events, and
+  returns a trace of the turn: which path answered it (yes/no gate or deep
+  model) and every tool call with its arguments and result. Runs are repeatable
+  and never touch the real Trello board.
+- **Callers.** Short questions use scripted caller lines (cheap, repeatable).
+  Multi-turn ticket calls use a model playing the resident with a goal, because
+  a fixed script breaks as soon as the agent asks in a different order.
+- **Checks.** Prefer what the agent *did* over what it said: a ticket was
+  created (for which department, where), the call was transferred (to whom), a
+  known issue was matched, the caller was added to a ticket, a gate answered
+  the turn. Then loose patterns on what it said (a phone number, "Mini City
+  Hall", "9 1 1"), and an LLM judge (a different model from the agent) for what
+  only a judgement can cover — "asked for the location", "invented nothing".
+  Every call is also checked for an answer each turn and no URL read aloud.
+- **Report.** Pass rate per requirement, failing scenarios first, each with its
+  checks, transcript, tools and per-turn time.
 
-| Check | How it's measured |
+### What's covered
+
+| Requirement | Scenarios |
 |---|---|
-| Names the department and what it covers | Judge |
-| When closed: says when they reopen, the urgent line, 911 | Judge |
-| Collects what / where / name / number, one at a time | Judge + tool arguments |
-| Reads back and gets a yes before creating | Order of tool calls in the turn logs |
-| Gives the reference, who follows up, and when | Transcript match + judge |
-| No duplicate when the issue is already known | Ticket store state |
-| The ticket matches what the caller said | Ticket store vs scenario |
-| Nothing invented | Judge, with the city knowledge as reference |
-| First words within 1.5 s; 95% of turns within 3 s | Turn logs |
+| 1 · code & website | Construction and night noise, fireworks, dogs on leash and at beaches, 24-hour street parking, tree permits, a car parked for weeks; missed garbage, City Hall on a Saturday, water bill, shopping-cart timeline, a water main break, green card and driver's license (not city services) |
+| 2 · current events | Next council meeting, what's on next weekend, City Hall on Thanksgiving |
+| 3 · tickets | New problem while closed (ticket with reference and follow-up), asks for what's missing, known issue → join instead of duplicating, already in the city's 311 system, status by reference / caller ID / a number given on a web call, caller changes their mind |
+| 4 · routing | Seven problems on a Monday morning, each transferred to the right one of seven departments |
+| 5 · hours rule | The same report at 10 AM, 3:59 PM, 4:30 PM and 7:30 AM Monday, Saturday and Veterans Day — transfer when open, ticket when closed |
+| safety | Emergency answered by the 911 gate; goodbye answered by the goodbye gate |
 
-**How it runs:**
+### What it caught
 
-- Against the in-memory ticket store with fresh seeds per scenario, so runs are
-  repeatable and don't fill the Trello board; one smoke run against Trello.
-- The judge is a different model from the agent, and logs a reason for every
-  check, so a failure can be read rather than guessed at.
-- Output: a pass rate per check and the failing transcripts, saved per run so a
-  prompt or model change can be compared with the last run.
-- Size for v1: ~25 routing cases, ~100 first turns, ~15 phone asks and ~20 full
-  conversations — minutes and a few dollars per run.
+The first run passed 32 of 41. The failures were real, and all are fixed:
 
-**Not in v1:** real audio. The harness sends text to the brain endpoint, so
-speech-recognition errors, interruptions and pauses aren't covered. A later
-version could play generated speech into a Vapi web call.
+- A water main break went to the 911 gate; the city wants its 24-hour line.
+- The agent asked follow-up questions instead of answering ("is it in the
+  lane or by the curb?" before checking whether it was already reported;
+  asking for a reference when the call had caller ID).
+- It offered answers instead of giving them ("would you like their number?").
+- It answered a rule from memory, wrongly (dogs at Chism Beach in July).
+- It said "please hold while I transfer you" without calling the transfer
+  tool. The code now catches any promised action ("let me check", "I'll
+  connect you") with no matching tool call in the same turn and makes the
+  model act.
+- Two checks were wrong, not the agent (a time pattern too strict; the judge
+  not seeing enough of the tool results), and were fixed in the eval.
+
+### Not covered yet
+
+- Real audio: speech-to-text errors, interruptions and pauses. The eval sends
+  text to the brain endpoint; a later version could play generated speech
+  into a Vapi web call.
+- Volume: real resident wording at scale (SeeClickFix descriptions) and
+  routing accuracy over Bellevue's top 25 request types weighted by volume —
+  the layers described in the research above.
+- Repeat runs to measure flakiness: each scenario runs once per run.
 
 ## Where things stand
 
@@ -530,7 +567,7 @@ version could play generated speech into a Vapi web call.
 | Ticketing | ✓ One interface (`src/lib/tickets/types.ts`); Trello and in-memory adapters | More adapters (Jira, Monday, GitHub Issues) |
 | Understanding | ✓ Rules → yes/no gates (`gates.ts`) → deep model (`agent.ts`), raced in `brain.ts`; keyword rules as fallback | More gates as the task's routes need them |
 | City knowledge | ✓ City pack in `src/cities/bellevue/`: real departments (311 data), real numbers, hours and holidays, website snapshot + search, live MyBellevue requests | A second city to prove the swap; scheduled re-scrapes |
-| Evaluation | Simulated-caller harness used for manual testing | The v1 eval above |
+| Evaluation | ✓ 41 scripted Bellevue calls through the API in test mode, scored by rules and an LLM judge | Real audio; volume layers; repeat runs |
 | Tools | ✓ Find known issue, look up, create, follow, transfer (simulated) | Real transfers |
 | Model provider | ✓ Only `src/lib/llm.ts` knows it; OpenAI or any OpenAI-compatible endpoint by config | — |
 
