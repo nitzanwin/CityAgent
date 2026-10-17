@@ -4,7 +4,7 @@ A **prototype**, not a finished municipal AI receptionist, built with Next.js an
 
 ## What's included
 
-- Text-based municipal receptionist demonstration with optional **browser speech recognition and synthesis** (not phone-grade voice AI)
+- Voice-only call screen: one button starts a live browser call with the CityDesk assistant (Vapi web SDK); the same assistant answers a real phone number
 - Deterministic department selection and business-hour routing with Pacific timezone
 - Human-readable decisions and optional mock/Trello ticket creation
 - City source links, without inventing municipal laws or current events
@@ -30,7 +30,9 @@ Copy `.env.example` to `.env.local` and supply Trello API key, token, and destin
 - `src/lib/routing.ts`: explicit routing and schedule decision engine
 - `src/lib/tickets.ts`: ticket integration boundary
 - `src/app/api/agent/route.ts`: validated API and ticket orchestration
-- `src/app/page.tsx`: interactive demo and microphone affordances
+- `src/app/api/vapi/chat/completions/route.ts`: the brain Vapi calls every turn (OpenAI-compatible, secret-protected)
+- `src/lib/reply.ts`: turns routing decisions into spoken replies, including the yes/no ticket follow-up
+- `src/app/page.tsx`: voice-only call screen (start, mute, end)
 - `tests/routing.test.ts`: decision unit tests
 
 ## Known limitations / next iterations

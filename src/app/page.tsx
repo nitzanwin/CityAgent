@@ -1,71 +1,78 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { city } from "@/lib/city";
-import type { Decision } from "@/lib/routing";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type Vapi from "@vapi-ai/web";
 
-type Entry = { role: "citizen" | "agent"; text: string; source?: string };
-type Recognition = { lang: string; onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void; stop: () => void };
-type RecognitionCtor = new () => Recognition;
+type Status = "idle" | "connecting" | "live" | "ended";
+const publicKey = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
+const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID;
+const configured = Boolean(publicKey && assistantId);
+const clock = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+// The SDK reports failures as nested objects; a denied microphone is the one the caller can fix.
+const describe = (error: unknown) => /notallowed|permission|denied/i.test(JSON.stringify(error, Object.getOwnPropertyNames(error ?? {})) ?? String(error))
+  ? "Allow microphone access to make the call." : "The call couldn't connect. Please try again.";
+
+const PhoneIcon = () => <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
+const MicIcon = ({ off }: { off: boolean }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{off
+  ? <><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>
+  : <><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></>}</svg>;
+
 export default function Home() {
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Entry[]>([{ role: "agent", text: "Welcome to Bellevue CityDesk. Ask a question about city services, or tell me about an issue you'd like to report." }]);
-  const [simulation, setSimulation] = useState("2026-10-19T10:00");
-  const [useSimulation, setUseSimulation] = useState(true);
-  const [pending, setPending] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [lastDecision, setLastDecision] = useState<Decision | null>(null);
-  const recognizer = useRef<Recognition | null>(null);
-  const bottom = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { bottom.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-  const speak = (text: string) => { if (voiceEnabled && "speechSynthesis" in window) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(text)); } };
-  async function send(text: string) {
-    if (!text.trim() || pending) return;
-    setPending(true); setInput(""); setMessages(prev => [...prev, { role: "citizen", text }]);
-    try {
-      const simulatedTime = useSimulation ? new Date(`${simulation}:00-07:00`).toISOString() : undefined;
-      const res = await fetch("/api/agent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, simulatedTime }) });
-      if (!res.ok) throw new Error("The agent is unavailable. Please retry.");
-      const result: { decision: Decision } = await res.json();
-      setLastDecision(result.decision);
-      setMessages(prev => [...prev, { role: "agent", text: result.decision.response, source: result.decision.action === "answer" ? result.decision.source : undefined }]);
-      speak(result.decision.response);
-    } catch (error) { setMessages(prev => [...prev, { role: "agent", text: error instanceof Error ? error.message : "Unexpected error" }]); }
-    finally { setPending(false); }
+  const vapi = useRef<Vapi | null>(null);
+  const [status, setStatus] = useState<Status>("idle");
+  const [seconds, setSeconds] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [level, setLevel] = useState(0);
+  const [error, setError] = useState<string | null>(configured ? null : "Calling isn't set up yet.");
+
+  useEffect(() => () => { void vapi.current?.stop(); }, []);
+  useEffect(() => {
+    if (status !== "live") return;
+    const started = Date.now();
+    const timer = setInterval(() => setSeconds(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [status]);
+
+  // Loaded on first call: the SDK needs the browser, so it stays out of the server render.
+  async function client() {
+    if (vapi.current) return vapi.current;
+    const { default: VapiClient } = await import("@vapi-ai/web");
+    const v = new VapiClient(publicKey!);
+    v.on("call-start", () => { setSeconds(0); setStatus("live"); });
+    v.on("call-end", () => { setStatus(s => (s === "idle" ? s : "ended")); setSpeaking(false); setLevel(0); setMuted(false); });
+    v.on("speech-start", () => setSpeaking(true));
+    v.on("speech-end", () => setSpeaking(false));
+    v.on("volume-level", setLevel);
+    v.on("error", e => { setError(describe(e)); setStatus("idle"); setLevel(0); });
+    vapi.current = v;
+    return v;
   }
-  function listen() {
-    if (listening) { recognizer.current?.stop(); setListening(false); return; }
-    const browser = window as typeof window & { SpeechRecognition?: RecognitionCtor; webkitSpeechRecognition?: RecognitionCtor };
-    const Ctor = browser.SpeechRecognition || browser.webkitSpeechRecognition;
-    if (!Ctor) { alert("Speech recognition is not available in this browser. Try Chrome or use text input."); return; }
-    const rec = new Ctor(); rec.lang = "en-US";
-    rec.onresult = event => { const transcript = event.results[0]?.[0]?.transcript; if (transcript) void send(transcript); };
-    rec.onend = () => setListening(false); rec.onerror = () => setListening(false);
-    recognizer.current = rec; rec.start(); setListening(true);
+
+  async function start() {
+    setError(null); setSeconds(0); setStatus("connecting");
+    try { if (!(await (await client()).start(assistantId))) throw new Error("Call not started"); }
+    catch (e) { setError(describe(e)); setStatus("idle"); }
   }
-  async function ticket() {
-    const latest = [...messages].reverse().find(m => m.role === "citizen")?.text;
-    if (!latest || !lastDecision || lastDecision.action !== "ticket") return;
-    setPending(true);
-    try {
-      const simulatedTime = useSimulation ? new Date(`${simulation}:00-07:00`).toISOString() : undefined;
-      const res = await fetch("/api/agent", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({message:latest, simulatedTime, createTicket:true})});
-      const result = await res.json();
-      if (!res.ok || !result.ticket) throw new Error(result.error || "Ticket could not be created");
-      setMessages(prev=>[...prev,{role:"agent",text:`Ticket ${result.ticket.id} created (${result.ticket.provider} mode).${result.ticket.url ? ` View: ${result.ticket.url}` : ""}`}]);
-      setLastDecision(null);
-    } catch(err){ setMessages(prev=>[...prev,{role:"agent",text:err instanceof Error ? err.message : "Ticket failed"}]); }
-    finally {setPending(false);}
-  }
-  return <main className="shell">
-    <header><div><div className="eyebrow">THREEFOLD AI · TAKE-HOME PROTOTYPE</div><h1>CityDesk <span>↗</span></h1><p>City services, simplified. A voice-enabled municipal concierge.</p></div><div className="status"><span className="dot"/>Prototype · Bellevue, WA</div></header>
-    <section className="twoCol"><div className="panel chatPanel"><div className="panelHead"><div><h2>Citizen conversation</h2><p>Try typing or using your microphone</p></div><button className={`quiet ${voiceEnabled ? "active" : ""}`} onClick={()=>setVoiceEnabled(v=>!v)}>{voiceEnabled ? "🔊 Spoken replies on" : "🔈 Spoken replies off"}</button></div>
-      <div className="messages">{messages.map((m,i)=><div className={`bubble ${m.role}`} key={i}><span className="role">{m.role === "agent" ? "CITYDESK" : "YOU"}</span><div>{m.text}</div>{m.source && <a href={m.source} target="_blank" rel="noreferrer">Official source ↗</a>}</div>)}{pending && <div className="loading">Working on it…</div>}<div ref={bottom}/></div>
-      {lastDecision?.action === "ticket" && <div className="ticketAction"><span>Office closed · ticket recommended</span><button onClick={ticket} disabled={pending}>Create ticket ↗</button></div>}
-      <form onSubmit={e=>{e.preventDefault();void send(input);}} className="composer"><button type="button" onClick={listen} aria-label="Speak" className={`mic ${listening?"recording":""}`}>{listening?"■":"🎙"}</button><input placeholder="Ask about a pothole, parks, events, local laws…" value={input} onChange={e=>setInput(e.target.value)}/><button type="submit" disabled={pending || !input.trim()}>Send →</button></form>
-      <div className="prompts">{["I need to report a pothole", "What are the noise rules?", "What's happening in Bellevue?"].map(p=><button key={p} onClick={()=>void send(p)}>{p}</button>)}</div>
-    </div><aside><div className="panel info"><div className="eyebrow">CONTROL CENTER</div><h2>Test routing decisions</h2><p>Change the simulated local time to test whether a citizen is transferred or offered a ticket.</p><label className="toggle"><input type="checkbox" checked={useSimulation} onChange={e=>setUseSimulation(e.target.checked)}/> Use simulated time</label><label className="fieldLabel" htmlFor="simulation">Bellevue date and time</label><input id="simulation" type="datetime-local" value={simulation} disabled={!useSimulation} onChange={e=>setSimulation(e.target.value)}/><p className="hint">Demo policy: weekdays, 8 AM–4 PM Pacific. Does not yet include verified city holidays or department-specific hours.</p>{lastDecision && <div className="decision"><div className="eyebrow">LATEST DECISION</div><strong>{lastDecision.action.toUpperCase()}</strong><div>Department: {lastDecision.department}</div>{lastDecision.action === "transfer" && <div>Mock number: {lastDecision.phone}</div>}</div>}</div>
-      <div className="panel info"><div className="eyebrow">OFFICIAL LINKS</div><h2>Reference sources</h2>{city.sources.map(s=><a className="source" key={s.url} href={s.url} target="_blank" rel="noreferrer">{s.label} <span>↗</span></a>)}<p className="hint">This starter uses safe source links and rule-based routing. Live knowledge retrieval, verified event details, and real phone transfers are intentionally not implemented yet.</p></div>
-      <div className="panel info"><div className="eyebrow">WHAT'S NEXT</div><h2>Pluggable integrations</h2><p>Voice provider, knowledge retrieval and ticketing can be replaced independently. Trello is optional; unconfigured ticket creation returns a clearly labeled mock ID.</p></div></aside></section><footer>Experimental demo · Not an official City of Bellevue service · No real transfers are placed</footer>
+  function end() { void vapi.current?.stop(); setStatus("ended"); setLevel(0); }
+  function toggleMute() { if (!vapi.current) return; vapi.current.setMuted(!muted); setMuted(!muted); }
+
+  const inCall = status === "connecting" || status === "live";
+  const line = { idle: "City services line", connecting: "Calling…", live: clock(seconds), ended: `Call ended · ${clock(seconds)}` }[status];
+  const hint = error ?? (status === "live" ? (muted ? "You're muted" : speaking ? "CityDesk is speaking" : "Listening…") : status === "idle" ? "Uses your microphone" : "");
+
+  return <main className={`call ${status}`}>
+    <section className="caller">
+      <div className="avatar" style={{ "--level": level } as CSSProperties}><span className="ring"/><span className="face">CD</span></div>
+      <h1>Bellevue CityDesk</h1>
+      <p className="status" aria-live="polite">{line}</p>
+      <p className={`hint ${error ? "error" : ""}`} aria-live="polite">{hint}</p>
+    </section>
+    <section className="controls">
+      {inCall ? <>
+        <div className="control"><button className="round mute" onClick={toggleMute} disabled={status !== "live"} aria-pressed={muted} aria-label={muted ? "Unmute" : "Mute"}><MicIcon off={muted}/></button>{muted ? "Unmute" : "Mute"}</div>
+        <div className="control"><button className="round end" onClick={end} aria-label="End call"><PhoneIcon/></button>End</div>
+      </> : <div className="control"><button className="round start" onClick={start} disabled={!configured} aria-label="Start call"><PhoneIcon/></button>{status === "ended" ? "Call again" : "Start call"}</div>}
+    </section>
+    <footer>Demo · Not an official City of Bellevue service</footer>
   </main>;
 }
