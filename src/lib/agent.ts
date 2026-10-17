@@ -26,7 +26,7 @@ const LEAD_IN_ONLY = /^(let me|one moment|just a moment|give me a (second|moment
 // Promises the caller hears ("let me check", "I'll connect you") and the tools that must back them in the same turn;
 // an empty tool list means the reply is never acceptable (asking permission to share what it should just say).
 const PROMISES: [RegExp, string[]][] = [
-  [/\bwould you like (me to (give|share|read)( you)?|the|their|a)\b[^?]{0,50}\b(number|phone|address|email|hours)\b/i, []],
+  [/\b(would you like|do you (need|want))\b(?![^?]*\b(your|callback)\b)[^?]{0,50}\b(number|phone|address|email|hours)\b/i, []],
   [/\bwould you like me to (check|look|find|search)\b/i, []],
   [/\b(i'?ll (transfer|connect) you|i'?m (transferring|connecting) you|(transferring|connecting) you( now)?|please hold)\b/i, ["transfer_call"]],
   [/\b(let me (check|look|see|find)|i'?m checking)\b/i, ["find_known_issue", "lookup_ticket", "search_city_info", "upcoming_events"]],

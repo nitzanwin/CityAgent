@@ -150,3 +150,14 @@ test('asking permission to share a number is not sent; the model is made to give
   assert.equal(await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, cityRequests: null, events: null }), 'Mini City Hall is open until 6 PM today, at 425-452-2800.');
   assert.equal(agentRequests.length, 2);
 });
+
+test("asking for the caller's own callback number is fine; asking whether they want ours is not", async () => {
+  const asks = async (content: string) => {
+    const { chat, agentRequests } = fakeModel([{ content, toolCalls: [] }, { content: 'rewritten', toolCalls: [] }]);
+    await runAgent(turns, { now: SATURDAY, tickets: tickets(), chat, cityRequests: null, events: null });
+    return agentRequests.length > 1;
+  };
+  assert.equal(await asks('Would you like to leave a callback number so they can reach you?'), false);
+  assert.equal(await asks('Can I get your name and a callback number?'), false);
+  assert.equal(await asks('Would you like to report this car, or do you need their phone number?'), true);
+});
