@@ -1,4 +1,4 @@
-import { city, departments, type Department, type DepartmentId } from "./city";
+import { city, departments, holidays as cityHolidays, type Department, type DepartmentId } from "./city";
 
 export function localTimeParts(date: Date, timeZone = city.timezone) {
   const pieces = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short", hour: "numeric", hourCycle: "h23" }).formatToParts(date);
@@ -6,7 +6,7 @@ export function localTimeParts(date: Date, timeZone = city.timezone) {
   return { weekday: get("weekday"), hour: Number(get("hour")) };
 }
 
-export function isOfficeOpen(date: Date, holidays: ReadonlySet<string> = new Set()): boolean {
+export function isOfficeOpen(date: Date, holidays: ReadonlySet<string> = cityHolidays): boolean {
   const { weekday, hour } = localTimeParts(date);
   const localDate = new Intl.DateTimeFormat("en-CA", { timeZone: city.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
   if (holidays.has(localDate)) return false;
@@ -25,7 +25,7 @@ export type Decision =
   | { action: "transfer"; department: DepartmentId; phone: string; response: string }
   | { action: "ticket"; department: DepartmentId; response: string; title: string };
 
-export function decide(message: string, now: Date, holidays: ReadonlySet<string> = new Set()): Decision {
+export function decide(message: string, now: Date, holidays: ReadonlySet<string> = cityHolidays): Decision {
   const input = message.trim();
   const dept = selectDepartment(input);
   if (/\b(events?|festival|concert|what'?s on|happening|calendar)\b/i.test(input)) {
@@ -38,13 +38,13 @@ export function decide(message: string, now: Date, holidays: ReadonlySet<string>
     return { action: "answer", department: dept.id, source: city.sources[0].url, response: "The official city website has more information. I can also help route a service request to the right department." };
   }
   if (isOfficeOpen(now, holidays)) {
-    return { action: "transfer", department: dept.id, phone: dept.mockPhone, response: `During demo business hours I would transfer this call to ${dept.name}. This number is a mock destination; no call is placed.` };
+    return { action: "transfer", department: dept.id, phone: dept.phone, response: `During demo business hours I would transfer this call to ${dept.name}. This number is a mock destination; no call is placed.` };
   }
   return { action: "ticket", department: dept.id, title: input.slice(0, 80), response: `${dept.name} is closed under the demo schedule. I can create a service ticket instead.` };
 }
 
 // When offices next open, searched hour by hour up to 8 days ahead (hours are whole-hour, demo policy).
-export function nextOpening(now: Date, holidays: ReadonlySet<string> = new Set()): Date | null {
+export function nextOpening(now: Date, holidays: ReadonlySet<string> = cityHolidays): Date | null {
   const hour = 3_600_000, start = Math.floor(now.getTime() / hour) * hour;
   for (let h = 1; h <= 24 * 8; h++) if (isOfficeOpen(new Date(start + h * hour), holidays)) return new Date(start + h * hour);
   return null;

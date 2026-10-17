@@ -25,9 +25,12 @@ Live and callable:
 What a caller can do today: report a problem (the agent names the department,
 checks known issues, collects what / where / name / number, reads it back,
 opens a Trello ticket and says who follows up and when), join an existing
-ticket instead of duplicating it, ask about their ticket by reference or
-caller ID, get the 911 warning in an emergency, or ask a general question
-answered from the city's knowledge file.
+ticket instead of duplicating it, hear that a problem is already in the
+city's own 311 system (MyBellevue, live), ask about their ticket by reference,
+phone number or caller ID, get the 911 warning in an emergency, or ask a
+general question: real department numbers and hours, City Hall holidays, who
+handles non-city services, and the city's website and events calendar (a
+dated snapshot).
 
 ## The task
 
@@ -102,21 +105,8 @@ invoke a tool if one is needed → turn the tool's result into a spoken reply.
   Markdown files / knowledge set, so the same system can be deployed to a
   different city by swapping that knowledge, not the code.
 
-Draft shape of a city "pack":
-
-```
-cities/
-  bellevue/
-    city.json          # departments, hours, phone numbers, active integrations
-    knowledge/
-      departments.md
-      faq.md
-      events.md
-```
-
-Draft tool list (from what the starter already does): find the right
-department, check office hours, answer from city knowledge, transfer the call,
-create a ticket.
+How this is built — the city pack, its layers and the tools on top of them —
+is in [Knowledge base per city](#knowledge-base-per-city).
 
 ## Architecture
 
@@ -269,6 +259,29 @@ What the transcript also showed:
 - Confirmed: Vapi sends the whole conversation every turn (the "yes" follow-up
   worked).
 
+### Feedback from the "residence card" call (2026-10-17)
+
+The caller asked when the office opens, to come in for a "residence card". The
+agent pointed to the city's website three times, and to "Can't you help?"
+answered with what it couldn't do. It never asked what a residence card meant,
+never gave City Hall's number, address or a Saturday option, and never said
+that green cards are federal (USCIS).
+
+Fixes: the agent now gives the concrete answer (number, address, hours, next
+step) and never the website alone; asks one question when the request is
+unclear; says who handles non-city services (a list in `knowledge.md`, e.g.
+USCIS, Department of Licensing, King County); only offers details it actually
+has; and knows Mini City Hall is open Saturdays. Replayed with a simulated
+caller, the same call ends with the green card routed to USCIS and its number.
+
+Latency was fine: Vapi's per-turn metrics for that call were 1.9–2.7 s
+(deciding the caller finished 0.5 s, speech-to-text 0.4 s, our server and the
+model 1.1 s, voice 0.3 s). The long gaps were the caller still talking.
+
+A second lesson from simulated calls: tool results are not kept between turns
+(Vapi only replays what was spoken), so a follow-up question about an event got
+made-up hours. The agent now re-runs a tool for any detail it hasn't said aloud.
+
 ### Flow v2 (live)
 
 Each turn reads the whole conversation, not just the last sentence.
@@ -302,6 +315,73 @@ Each turn reads the whole conversation, not just the last sentence.
 - **A ticket store with statuses that persists between calls** — the memory.
   It lives behind the ticketing integration (principle 2), so the agent can
   create, find, look up and follow tickets in whichever system the city uses.
+
+## Knowledge base per city
+
+Everything city-specific lives in one folder in the repo, `src/cities/<id>/`.
+The code never names a city: a new city is a new folder, not a code change.
+
+```
+src/cities/
+  index.ts              # registry of city packs; CITY env picks the active one
+  knowledge.ts          # loads knowledge.md
+  pages.ts              # loads and searches the website snapshot
+  bellevue/
+    city.json           # config: departments, hours, numbers, 311 feed
+    knowledge.md        # core facts, always in the prompt
+    known-issues.json   # seed tickets for a new ticketing board
+    sources.json        # which city web pages to scrape
+    pages/*.md          # the scraped snapshot, one file per page
+```
+
+### The layers
+
+From what the agent always knows to what it looks up live:
+
+| Layer | Where | How it's built | How the agent uses it | How fresh | Status |
+|---|---|---|---|---|---|
+| **Config** | `city.json` | Written from the city's own data: departments and what each handles (from its 311 data), hours, emergency and urgent numbers, which 311 feed and ticketing system to use | Rules (hours, routing fallback) and the system prompt | Changes rarely | ✓ |
+| **Core facts** | `knowledge.md` | Curated by hand: short, checked facts a receptionist must always know, each traceable to a source | In the prompt on every turn | Updated when the city changes something | ✓ |
+| **Website snapshot** | `sources.json` → `pages/*.md` | `npm run scrape:city -- <id>` fetches the listed pages and saves each as Markdown with its source URL and fetch date; the events calendar comes from its RSS feed | Searched on demand by the `search_city_info` tool (BM25 keyword ranking); results carry an "as of" date | As old as the last scrape | ✓ 27 pages + 32 upcoming events, saved 2026-10-17 |
+| **Live city data** | `openRequests` in `city.json` | Nothing to build: read from the city's own 311 system (an ArcGIS layer for Bellevue; only the field mapping is per city) | Known-issue checks and request lookups (`find_known_issue`, `lookup_ticket`) | Live, cached 10 minutes | ✓ |
+| **Our tickets** | The ticketing integration (Trello for the demo) | Seeded from `known-issues.json`, then grows from calls | Known-issue checks, lookups, following a ticket, creating one | Live | ✓ |
+
+### Why it's split this way
+
+- **What's always in the prompt must stay small.** It is sent on every turn,
+  so every line adds latency and cost. Only verified essentials go in
+  `knowledge.md`.
+- **Everything else is looked up when needed,** through tools: the website
+  snapshot by search, the city's requests and our tickets by query.
+- **Scraped facts are labelled as snapshots.** Each result carries its fetch
+  date, and the agent says "as of …" for events, schedules and anything
+  time-sensitive. Stale is acceptable; presenting stale as current is not.
+- **Live data is read-only.** CityDesk reads the city's 311 system to avoid
+  duplicates but never writes to it; its own tickets go to the ticketing
+  integration.
+
+### Adding a city
+
+1. Create `src/cities/<id>/` and register it in `src/cities/index.ts`.
+2. `city.json`: departments and what each handles — ideally from that city's
+   311 data, which most US cities publish — plus hours, emergency and urgent
+   numbers, and its 311 feed if it has one.
+3. `sources.json`: the pages a receptionist needs (contact, hours,
+   departments, garbage, parking, events). Run the scraper and skim the
+   pages for junk.
+4. `knowledge.md`: the short always-known facts, each traceable to a page.
+5. `known-issues.json` (optional seed) and the ticketing integration's
+   settings.
+6. Run the routing layer of the evaluation plan against the city's 311 data.
+
+### Not yet
+
+- Re-scraping on a schedule: a job that reruns the scraper and opens a pull
+  request when pages change, so a person reviews what changed.
+- Better search if the snapshot grows: keyword search is enough for a few
+  dozen pages; embeddings would help at hundreds.
+- Checking `knowledge.md` against the snapshot automatically, to flag facts
+  that no longer match the city's website.
 
 ## Research: what residents actually ask (2026-10-17)
 
@@ -449,7 +529,7 @@ version could play generated speech into a Vapi web call.
 | Voice | ✓ Vapi: phone number + voice-only call screen (`src/app/page.tsx`) | Real call transfers |
 | Ticketing | ✓ One interface (`src/lib/tickets/types.ts`); Trello and in-memory adapters | More adapters (Jira, Monday, GitHub Issues) |
 | Understanding | ✓ Rules → yes/no gates (`gates.ts`) → deep model (`agent.ts`), raced in `brain.ts`; keyword rules as fallback | More gates as the task's routes need them |
-| City knowledge | ✓ City pack in `src/cities/bellevue/` (config, `knowledge.md`, known issues), with Bellevue's real departments from its 311 data | A second city to prove the swap |
+| City knowledge | ✓ City pack in `src/cities/bellevue/`: real departments (311 data), real numbers, hours and holidays, website snapshot + search, live MyBellevue requests | A second city to prove the swap; scheduled re-scrapes |
 | Evaluation | Simulated-caller harness used for manual testing | The v1 eval above |
 | Tools | ✓ Find known issue, look up, create, follow, transfer (simulated) | Real transfers |
 | Model provider | ✓ Only `src/lib/llm.ts` knows it; OpenAI or any OpenAI-compatible endpoint by config | — |

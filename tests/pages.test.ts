@@ -38,3 +38,23 @@ test('the agent can search the website snapshot, and results say how old they ar
   assert.equal(result.results[0].asOf, '2026-10-17');
   assert.match(result.results[0].text, /Republic Services/);
 });
+
+test('a long table is split into pieces that each keep the table header', () => {
+  const rows = Array.from({ length: 60 }, (_, i) => `| 2026-11-${String(i % 28 + 1).padStart(2, '0')} | 6 PM | Event number ${i} with a long descriptive name | City Hall, 450 110th Ave NE |`);
+  const chunks = parsePage(page('City Events', 'events', `# City Events\n\n| Date | Time | Event | Where |\n|---|---|---|---|\n${rows.join('\n')}`));
+  assert.ok(chunks.length > 2);
+  for (const c of chunks) assert.match(c.text, /^\| Date \| Time \| Event \| Where \|\n\|---/);
+  assert.match(chunks.at(-1)!.text, /Event number 59/);
+});
+
+test("Bellevue's scraped pages answer the questions callers ask", async () => {
+  const { cityPages } = await import('../src/cities/pages');
+  const pages = cityPages('bellevue');
+  assert.ok(pages.length > 50, `expected the scraped pages to be present, got ${pages.length} sections`);
+  // The agent gets the top three results, so that's what has to contain the answer.
+  const top3 = (q: string) => searchChunks(q, pages).map(c => c.text).join(' ');
+  assert.match(top3('missed garbage pickup'), /Republic Services|425-452-4762/);
+  assert.equal(searchChunks('upcoming events', pages)[0].topic, 'events');
+  assert.match(top3('construction noise hours'), /7 a\.m\. to 8 p\.m\./);
+  assert.match(top3('water main break flooding emergency'), /425-452-7840/);
+});

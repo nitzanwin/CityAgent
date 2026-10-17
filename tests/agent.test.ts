@@ -55,12 +55,12 @@ test('creating a ticket says who follows up, when they reopen, and how they will
 test('a caller asking about their ticket is found by caller ID', async () => {
   const store = tickets();
   await store.create({ department: 'parks', title: 'Swing', issue: 'Broken', location: 'Downtown Park', reporter: { name: 'Dana', phone: '+14255550123' } });
-  const { chat, agentRequests } = fakeModel([toolCall('lookup_ticket', { reference: '' })]);
+  const { chat, agentRequests } = fakeModel([toolCall('lookup_ticket', { reference: '', phone: '' })]);
   await runAgent(turns, { now: SATURDAY, tickets: store, chat, callerNumber: '+1 425 555 0123' });
   const [result] = toolResults(agentRequests[1]);
   assert.equal(result.found, true);
   assert.equal(result.tickets[0].reference, 'CD-1006');
-  const { chat: webChat, agentRequests: web } = fakeModel([toolCall('lookup_ticket', { reference: '' })]);
+  const { chat: webChat, agentRequests: web } = fakeModel([toolCall('lookup_ticket', { reference: '', phone: '' })]);
   await runAgent(turns, { now: SATURDAY, tickets: store, chat: webChat });
   assert.match(toolResults(web[1])[0].reason, /no caller ID/);
 });

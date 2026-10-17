@@ -41,7 +41,10 @@ export const TOOLS: ToolSpec[] = [
   fn("find_known_issue", "Check whether a reported problem is already known: an open CityDesk ticket, or a request already in the city's own 311 system, for the same problem at the same place. Call before opening any new ticket.",
     { department: { type: "string", enum: departmentIds }, issue: text("What is wrong, in a short sentence"), location: text("Where it is, as precisely as the caller said") }),
   fn("lookup_ticket", "Look up an existing ticket: by reference if the caller has one, otherwise by the caller's phone number.",
-    { reference: text("Digits only: a CityDesk reference (e.g. 1042) or a city 311 request number (e.g. 18808602); an empty string to search by caller ID") }),
+    {
+      reference: text("Digits only: a CityDesk reference (e.g. 1042) or a city 311 request number (e.g. 18808602); empty to search by phone number"),
+      phone: text("A phone number the caller gave to search by; empty to use caller ID"),
+    }),
   fn("create_ticket", "Open a new ticket. Only after the caller confirmed the read-back.", {
     department: { type: "string", enum: departmentIds }, title: text("Short title, e.g. 'Pothole in the right lane'"),
     issue: text("What is wrong, in the caller's words"), location: text("Exact location"), name: text("Caller's name"), phone: text("Callback number"),
@@ -87,10 +90,11 @@ async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
         const t = await tickets.get(args.reference);
         return t ? { found: true, ticket: summary(t) } : { found: false, reason: "No ticket has that reference." };
       }
-      if (!callerNumber) return { found: false, reason: "No reference given, and this call has no caller ID. Ask the caller for their reference." };
-      const mine = (await tickets.list()).filter(t => involves(t, callerNumber)).slice(-3);
-      const linked = (t: Ticket) => ({ ...summary(t), caller: `This caller ${samePhone(t.reporter.phone, callerNumber) ? "reported this ticket" : "follows this ticket"}, so they'll already be contacted on updates.` });
-      return mine.length ? { found: true, tickets: mine.map(linked) } : { found: false, reason: "No tickets are linked to this phone number." };
+      const phone = /\d{7}/.test(String(args.phone ?? "").replace(/\D/g, "")) ? String(args.phone) : callerNumber;
+      if (!phone) return { found: false, reason: "No reference given, and this call has no caller ID. Ask the caller for their reference or the phone number they gave when reporting." };
+      const mine = (await tickets.list()).filter(t => involves(t, phone)).slice(-3);
+      const linked = (t: Ticket) => ({ ...summary(t), caller: `This number ${samePhone(t.reporter.phone, phone) ? "reported this ticket" : "follows this ticket"}, so they'll already be contacted on updates.` });
+      return mine.length ? { found: true, tickets: mine.map(linked) } : { found: false, reason: "No CityDesk tickets are linked to this phone number. The city's own 311 requests can only be looked up by their request number." };
     }
     case "create_ticket": {
       const t = await tickets.create({ department: args.department, title: args.title, issue: args.issue, location: args.location, reporter: { name: args.name, phone: args.phone } });
@@ -132,13 +136,21 @@ How to speak:
 - Ask one question at a time.
 - When you call a tool, also write a very short spoken lead-in, such as "Let me check that." Never say you're checking something unless you call the tool in the same turn.
 - Never say you have added, opened or changed anything unless a tool result in this conversation confirms it. When you have what a tool needs, call it in that same turn.
-- Whenever you tell the caller about a ticket, say its reference (spokenReference). Tool results are not kept between turns: if you need a reference that wasn't said earlier, call find_known_issue or lookup_ticket again instead of guessing.
+- Whenever you tell the caller about a ticket, say its reference (spokenReference).
+- Tool results are not kept between turns; only what you said aloud is. For any detail you haven't already said (a reference, a time, a place, a phone number), call the tool again instead of recalling or guessing.
 - Never invent ticket references, statuses, dates, phone numbers, laws or events. Use only tool results and the city knowledge below.
+
+Be genuinely helpful, like a good receptionist:
+- Give the concrete answer: the phone number, address, hours or next step. Never answer with only "check the city's website"; if you mention it, also say who to call and their number.
+- If what the caller wants is unclear, ask one short question to find out before answering (for example, a "residence card" could mean a green card, a state ID, or proof of address).
+- If it isn't a city service, say so and who handles it (see "Not handled by the city" in the city knowledge).
+- Only offer information you actually have in the city knowledge or a tool result; don't offer a number or detail and then not have it.
+- If you can't do something yourself, offer the best next step: the right number, an in-person option that's open, or a ticket so the right department calls them back. If the caller asks whether you can help, say what you can do, not what you can't.
 
 When the caller reports a problem:
 1. Tell them which department handles it and what that department covers, for example "That's Transportation; they look after potholes, streetlights and traffic signals."
 2. As soon as you know what and where, call find_known_issue. If it's a CityDesk ticket, say so, give its status and latest update, and offer to add them so they're contacted when it's fixed (follow_ticket). If it's already in the city's own 311 system, say it's already been reported to the city, when, and its status; you can't add them to it. Don't open a duplicate.
-3. If departments are open, offer to transfer the call. If they're closed, say so and when they reopen, and explain that you can open a ticket and the department will contact them when they're back. Mention that for something urgent where nobody is in danger they can call the city's urgent line at ${city.urgentLine.phone}, and for danger, 911.
+3. If departments are open, offer to transfer the call. If they're closed, say so and when they reopen, and explain that you can open a ticket and the department will contact them when they're back. Mention that for something urgent where nobody is in danger they can call the city's 24-hour line at ${city.urgentLine.phone} (${city.urgentLine.covers}), and for danger, 911.
 4. To open a ticket, collect one at a time whatever you don't have yet: what's wrong, exactly where, their name, and a callback number.
 5. Read back all four details in one sentence and ask them to confirm. Only call create_ticket after a clear yes.
 6. After creating it, give the reference using spokenReference, say which department will follow up and when, and that they'll be contacted at their number when there's an update or it's fixed.
@@ -151,7 +163,8 @@ Right now: ${clock} in ${city.shortName}. ${hours}
 Caller ID: ${callerNumber ? `${callerNumber}. If the caller agrees, use it as their callback number.` : "none (web call); ask for a callback number."}
 
 Departments:
-${departments.map(d => `- ${d.name} (${d.id}): ${d.covers}.`).join("\n")}
+${departments.map(d => `- ${d.name} (${d.id}): ${d.covers}. Phone ${d.phone}, ${d.hours}.`).join("\n")}
+Police non-emergency: ${city.policeNonEmergency}. Emergencies: 911.
 
 City knowledge:
 ${cityKnowledge()}`;
