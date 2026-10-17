@@ -1,4 +1,5 @@
 import { cityKnowledge } from "../cities/knowledge";
+import { cityPages, searchChunks, type PageChunk } from "../cities/pages";
 import { city, departmentName, departments } from "./city";
 import type { CityRequest, CityRequestSource } from "./city-requests";
 import { yesNo } from "./gates";
@@ -11,6 +12,7 @@ export type Turn = { role: "user" | "assistant"; text: string };
 export type AgentContext = {
   now: Date; callerNumber?: string; tickets: TicketSystem; chat?: Chat; signal?: AbortSignal;
   cityRequests?: CityRequestSource | null; // the city's own 311 system, read-only
+  pages?: PageChunk[]; // the city's website snapshot (defaults to src/cities/<id>/pages)
   proceed?: Promise<boolean>; // resolves false when a yes/no gate already answered the turn
   say?: (text: string) => void; // speak a lead-in ("Let me check.") while tools run
   log?: (event: string, data?: object) => void;
@@ -47,6 +49,8 @@ export const TOOLS: ToolSpec[] = [
   fn("follow_ticket", "Add the caller to an existing ticket so they're contacted on updates (instead of opening a duplicate).",
     { reference: text("The existing ticket's reference"), name: text("Caller's name"), phone: text("Callback number") }),
   fn("transfer_call", "Transfer the call to a department's line. Only while the department is open.", { department: { type: "string", enum: departmentIds } }),
+  fn("search_city_info", "Search a saved snapshot of the city's website for facts the city knowledge doesn't cover: phone numbers, hours, programs, how to do something, upcoming events. Each result says the date the page was saved.",
+    { query: text("What to look up, in a few words, e.g. 'garbage pickup missed' or 'events this weekend'") }),
 ];
 
 async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
@@ -106,6 +110,12 @@ async function runTool(call: ToolCall, ctx: AgentContext): Promise<object> {
       if (!isOfficeOpen(now)) return { transferred: false, reason: "The department is closed right now." };
       return { transferred: false, simulated: true, department: department?.name, note: "Transfers are simulated in this demo: tell the caller you'd connect them now, and that no call is actually placed." };
     }
+    case "search_city_info": {
+      const hits = searchChunks(args.query ?? "", ctx.pages ?? cityPages());
+      return hits.length
+        ? { found: true, results: hits.map(h => ({ page: h.title, section: h.heading, text: h.text, asOf: h.fetched })) }
+        : { found: false, reason: "Nothing in the city's website snapshot matches. Point the caller to the city's website." };
+    }
     default:
       return { error: `Unknown tool ${call.function.name}` };
   }
@@ -135,7 +145,7 @@ When the caller reports a problem:
 
 When the caller asks about an existing ticket or report, call lookup_ticket (with their reference if they have one). Tell them its status, the latest update and what happens next.
 
-When the caller asks a general question, answer from the city knowledge if it covers it; otherwise point them to the city's website.
+When the caller asks a general question, answer from the city knowledge below if it covers it; otherwise call search_city_info before saying you don't know, and only then point them to the city's website. search_city_info results are a snapshot of the city's website from their asOf date: for events, schedules and anything time-sensitive, say it's as of that date and may have changed.
 
 Right now: ${clock} in ${city.shortName}. ${hours}
 Caller ID: ${callerNumber ? `${callerNumber}. If the caller agrees, use it as their callback number.` : "none (web call); ask for a callback number."}
