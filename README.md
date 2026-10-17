@@ -39,6 +39,18 @@ Copy `.env.example` to `.env.local`. On Vercel the same variables live in Projec
 
 No real transfers occur yet.
 
+## Evaluation
+
+41 scripted Bellevue calls, one or more per requirement of the brief, run through the real API in test mode (simulated clock, isolated ticket store, frozen city data, a trace of every decision) and scored by rules and an LLM judge. Latest results: [`evals/reports/latest.md`](evals/reports/latest.md).
+
+```bash
+npm run eval                                    # against the deployed app (needs .env.local)
+npm run eval -- --target http://localhost:3000  # against a local build
+npm run eval -- --only routing --no-judge       # a subset, without the judge
+```
+
+Scenarios live in `evals/scenarios.ts`; see PLAN.md, "Evaluation", for how it works and what it caught.
+
 ## Vapi setup
 
 - **Assistant model:** provider `custom-llm`, URL `https://<host>/api/vapi`. Vapi appends `/chat/completions` itself.
